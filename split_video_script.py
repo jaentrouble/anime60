@@ -4,6 +4,7 @@ import time
 from pathlib import Path
 import argparse
 import ffmpeg
+import sys
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-n','--name', dest='name')
@@ -25,12 +26,16 @@ start_time = time.time()
 # fourcc = cv2.VideoWriter_fourcc(*'X264')
 
 for i in range(split):
-    (
-        ffmpeg
-        .input(str(raw_dir/(name+ext)),ss=duration*i, t=duration, c='copy')
-        .output(str(cut_dir/f'{name}_{i}.mp4'))
-        .run()
-    )
+    try:
+        (
+            ffmpeg
+            .input(str(raw_dir/(name+ext)),ss=duration*i, t=duration, c='copy')
+            .output(str(cut_dir/f'{name}_{i}.mp4'))
+            .run()
+        )
+    except ffmpeg.Error as e:
+        print(e.stderr.decode(), file=sys.stderr)
+        sys.exit(1)
 # in_process = (
 #     ffmpeg
 #     .input(str(raw_dir/(name+ext)),vcodec=rcodec)
