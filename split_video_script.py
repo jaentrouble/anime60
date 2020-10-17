@@ -25,10 +25,12 @@ start_time = time.time()
 # fourcc = cv2.VideoWriter_fourcc(*'X264')
 
 for i in range(split):
-    ffmpeg\
-    .input(str(raw_dir/(name+ext)),ss=duration*i, t=duration, c='copy')\
-    .output(str(cut_dir/f'{name}_{i}.mp4')\
-    .run()
+    (
+        ffmpeg
+        .input(str(raw_dir/(name+ext)),ss=duration*i, t=duration, c='copy')
+        .output(str(cut_dir/f'{name}_{i}.mp4'))
+        .run()
+    )
 # in_process = (
 #     ffmpeg
 #     .input(str(raw_dir/(name+ext)),vcodec=rcodec)
