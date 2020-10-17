@@ -39,7 +39,8 @@ while True:
     out_process = (
         ffmpeg
         .input('pipe:', format='rawvideo', pix_fmt='rgb24', s=f'{width}x{height}')
-        .output(str(cut_dir/f'{name}_{idx}.mp4'), vcodec='h264_nvenc')
+        .output(str(cut_dir/f'{name}_{idx}.mp4'), vcodec='h264_nvenc',
+        video_bitrate='500M')
         .overwrite_output()
         .run_async(pipe_stdin=True)
     )
@@ -62,5 +63,5 @@ while True:
         break
 in_process.wait()
 
-cap.release()
+# cap.release()
 print(f'{total_frames} frames took {time.time()-start_time} seconds ')
