@@ -8,7 +8,7 @@ import ffmpeg
 parser = argparse.ArgumentParser()
 parser.add_argument('-n','--name', dest='name')
 parser.add_argument('-e','--ext', dest='ext')
-parser.add_argument('-rc','--readcodec', dest=rcodec)
+parser.add_argument('-rc','--readcodec', dest='rcodec')
 args = parser.parse_args()
 
 raw_dir = Path('data/raw')
