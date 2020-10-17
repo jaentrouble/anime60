@@ -28,27 +28,27 @@ width, height = 3840, 2160
 
 in_process = (
     ffmpeg
-    .input(str(raw_dir/(name+ext)))
+    .input(str(raw_dir/(name+ext)),vcodec=rcodec)
+    .output('pipe:',format='rawvideo',pix_fmt='rgb24')
+    .run_async(pipe_stdout=True)
 )
 
-cap = cv2.VideoCapture(str(raw_dir/(name+ext)))
+# cap = cv2.VideoCapture(str(raw_dir/(name+ext)))
 while(cap.isOpened()):
     # writer = cv2.VideoWriter(str(cut_dir/f'{name}_{idx}{ext}'),fourcc, 60, (3840,2160)) 
     out_process = (
         ffmpeg
-        .input('pipe:', format='rawvideo', pix_fmt='bgr24', s=f'{width}x{height}',
-                vcodec=rcodec)
-        .output(str(cut_dir/f'{name}_{idx}{ext}'), vcodec='h264_nvenc')
+        .input('pipe:', format='rawvideo', pix_fmt='rgb24', s=f'{width}x{height}')
+        .output(str(cut_dir/f'{name}_{idx}.mp4'), vcodec='h264_nvenc')
         .overwrite_output()
         .run_async(pipe_stdin=True)
     )
     for i in range(N):
         if cap.isOpened():
-            ret, frame = cap.read()
-            if ret:
-                out_process.stdin.write(
-                    frame.tobytes()
-                )
+            # ret, frame = cap.read()
+            in_bytes = in_process.stdout.read(width*height*3)
+            if in_bytes:
+                out_process.stdin.write(in_bytes)
                 # writer.write(frame)
                 total_frames += 1
             else :
@@ -63,6 +63,7 @@ while(cap.isOpened()):
     idx += 1
     if done:
         break
+in_process.wait()
 
 cap.release()
 print(f'{total_frames} frames took {time.time()-start_time} seconds ')
