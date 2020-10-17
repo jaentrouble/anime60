@@ -29,8 +29,8 @@ for i in range(split):
     try:
         (
             ffmpeg
-            .input(str(raw_dir/(name+ext)),ss=duration*i, t=duration, c='copy')
-            .output(str(cut_dir/f'{name}_{i}.mp4'))
+            .input(str(raw_dir/(name+ext)),ss=duration*i, t=duration)
+            .output(str(cut_dir/f'{name}_{i}.mp4'), c='copy')
             .run()
         )
     except ffmpeg.Error as e:
