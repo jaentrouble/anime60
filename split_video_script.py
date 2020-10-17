@@ -34,7 +34,7 @@ in_process = (
 )
 
 # cap = cv2.VideoCapture(str(raw_dir/(name+ext)))
-while(cap.isOpened()):
+while True:
     # writer = cv2.VideoWriter(str(cut_dir/f'{name}_{idx}{ext}'),fourcc, 60, (3840,2160)) 
     out_process = (
         ffmpeg
@@ -44,19 +44,16 @@ while(cap.isOpened()):
         .run_async(pipe_stdin=True)
     )
     for i in range(N):
-        if cap.isOpened():
-            # ret, frame = cap.read()
-            in_bytes = in_process.stdout.read(width*height*3)
-            if in_bytes:
-                out_process.stdin.write(in_bytes)
-                # writer.write(frame)
-                total_frames += 1
-            else :
-                done = True
-                break
+        # ret, frame = cap.read()
+        in_bytes = in_process.stdout.read(width*height*3)
+        if in_bytes:
+            out_process.stdin.write(in_bytes)
+            # writer.write(frame)
+            total_frames += 1
         else :
             done = True
             break
+
     out_process.stdin.close()
     out_process.wait()
     print(f'{idx} done')
