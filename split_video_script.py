@@ -69,4 +69,4 @@ for i in range(split):
 # in_process.wait()
 
 # cap.release()
-print(f'took {time.time()-start_time} seconds ')
+print(f'took {time.time()-start_time} seconds')
