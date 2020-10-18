@@ -10,27 +10,52 @@ import io
 import matplotlib.pyplot as plt
 from functools import partial
 import numpy as np
+from extra_models.deep_voxel import VoxelInterp
 
-class AdiposeModel(keras.Model):
-    def __init__(self, inputs, model_function):
-        """
-        Because of numerical stability, softmax layer should be
-        taken out, and use it only when not training.
+class AnimeModel(keras.Model):
+    def __init__(self, inputs, model_function, interpolate_ratios):
+        """Gets 2 frames and returns interpolated frames
+
         Args
-            inputs : keras.Input
-            model_function : function that takes keras.Input and returns
-            output tensor of logits
+        ----
+        inputs : keras.Input
+            Expects [0,1] range normalized frames
+            shape : (N,H,W,2*C) where two frames are concatenated
+
+        model_function : function that takes keras.Input and returns
+        encoded image
+
+        interpolate_ratios: list
+            ex) [0.5] would make a single frame of 1/2 position.
+            ex) [0.4,0.8] would make two frames at 2/5, 4/5 position.
+
+        Output
+        ------
+        outputs : (N,H,W,C*F) where F is number of interpolated frames.
+            Concatenated as R0,B0,G0, R1,B1,G1 ...
+            Returns [0,1] range normalized frames
+
         """
         super().__init__()
-        outputs = model_function(inputs)
-        self.logits = keras.Model(inputs=inputs, outputs=outputs)
-        self.logits.summary()
+        
+        self.model_function = model_function
+        self.interpolate_ratios = interpolate_ratios
+        
+        encoded = model_function(inputs)
+        self.encoder = keras.Model(inputs=inputs, outputs=encoded)
+        self.encoder.summary()
+        self.interpolator = VoxelInterp(interpolate_ratios, dtype=tf.float32)
         
     def call(self, inputs, training=None):
-        casted = tf.cast(inputs, tf.float32) / 255.0
-        if training:
-            return self.logits(inputs, training=training)
-        return tf.math.sigmoid(self.logits(inputs, training=training))
+        inputs = tf.cast(inputs, tf.float32)
+        encoded = self.encoder(inputs, training=training)
+        interpolated = self.interpolator([inputs, encoded], training=training)
+        return interpolated
+    
+    def get_config(self):
+        config = super().get_config()
+        config['model_function'] = self.model_function
+        config['interpolate_ratios'] = self.interpolate_ratios
 
 class AugGenerator():
     """An iterable generator that makes data
@@ -333,71 +358,34 @@ def run_training(
     mymodel.evaluate(val_ds, steps=1000)
 
 if __name__ == '__main__':
-    import os
-    import imageio as io
-    import json
-    import numpy as np
-    import matplotlib.pyplot as plt
-    from skimage import draw
-    import cv2
-    from pathlib import Path
+    from flow_models import *
+    gpus = tf.config.experimental.list_physical_devices('GPU')
+    if gpus:
+        try:
+            for gpu in gpus:
+                tf.config.experimental.set_memory_growth(gpu, True)
+        except RuntimeError as e:
+            print(e)
 
-    data_dir = Path('data')
-    data_groups = next(os.walk(data_dir))[1]
-    img = []
-    data = []
-    img_name_dict = {}
-    img_idx = 0
-    for dg in data_groups[:]:
-        img_dir = data_dir/dg/'done'
-        img_names = os.listdir(img_dir)
-        for name in img_names:
-            img_path = str(img_dir/name)
-            img.append(io.imread(img_path))
-            img_name_dict[img_path] = img_idx
-            img_idx += 1
+    policy = mixed_precision.Policy('mixed_float16')
+    mixed_precision.set_policy(policy)
 
-        json_dir = data_dir/dg/'save'
-        json_names = os.listdir(json_dir)
-        dg_data = []
-        for name in json_names[:]:
-            with open(str(json_dir/name),'r') as j:
-                dg_data.extend(json.load(j))
-        for dg_datum in dg_data :
-            long_img_name = str(img_dir/dg_datum['image'])
-            dg_datum['image'] = img_name_dict[long_img_name]
-        data.extend(dg_data)
+    inputs = keras.Input((1280,720,6))
 
-    # fig = plt.figure()
-    # d_idx = random.randrange(0,len(data)-5)
-    # for i, d in enumerate(data[d_idx:d_idx+5]):
-    #     image = img[d['image']].copy()
-    #     image = cv2.resize(image, (1200,900), interpolation=cv2.INTER_LINEAR)
-    #     mask = d['mask']
-    #     m_idx = random.randrange(0,len(mask[0]))
-    #     pos = (mask[0][m_idx], mask[1][m_idx])
-    #     boxmin = d['box'][0]
-    #     boxmax = d['box'][1]
-    #     rr, cc = draw.disk((pos[1],pos[0]),5)
-    #     image[rr, cc] = [0,255,0]
-    #     rr, cc = draw.rectangle_perimeter((boxmin[1],boxmin[0]),(boxmax[1],boxmax[0]))
-    #     image[rr,cc] = [255,0,0]
-    #     image[mask[1],mask[0]] = [100,100,100]
-    #     ax = fig.add_subplot(5,1,i+1)
-    #     ax.imshow(image)
-    # plt.show()
+    lr_f = lambda x : 1.0
+    lr_callback = keras.callbacks.LearningRateScheduler(lr_f, verbose=1)
 
-    # gen = AugGenerator(img, data, (400,400))
-    # s = next(gen)
+    logdir = 'logs/fit/test'
+    tensorboard_callback = tf.keras.callbacks.TensorBoard(
+        log_dir=logdir,
+        histogram_freq=1,
+        profile_batch='3,5',
+        update_freq='epoch'
+    )
 
-    ds = create_train_dataset(img, data, (200,200),1, False)
-    sample = ds.take(5).as_numpy_iterator()
-    fig = plt.figure()
-    for i, s in enumerate(sample):
-        ax = fig.add_subplot(5,2,2*i+1)
-        img = s[0][0].swapaxes(0,1)
-        ax.imshow(img)
-        ax = fig.add_subplot(5,2,2*i+2)
-        mask = s[1][0].swapaxes(0,1)
-        ax.imshow(mask)
-    plt.show()
+    model = AnimeModel(inputs, hr_5_3_0, [0.4, 0.8])
+    model.compile(optimizer='adam',loss='mse')
+    sample_x = np.random.random((10,1280,720,6))
+    sample_y = np.random.random((10,1280,720,6))
+    model.fit(x=sample_x, y=sample_y,batch_size=1 ,epochs=10,
+    callbacks=[lr_callback,tensorboard_callback])
