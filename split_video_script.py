@@ -28,7 +28,7 @@ for v in os.listdir(raw_dir):
             'format=duration', 
             '-of', 
             'default=noprint_wrappers=1:nokey=1', 
-            str(raw_dir/v
+            str(raw_dir/v)
         ], 
         stdout=subprocess.PIPE, 
         stderr=subprocess.STDOUT).stdout
