@@ -34,17 +34,36 @@ for v in os.listdir(raw_dir):
         stderr=subprocess.STDOUT).stdout
     )
     split = int(vid_len // duration)
+    if v.endswith('.mp4'):
+        vcodec = 'h264_cuvid'
+    elif v.endswith('.mkv'):
+        vcodec = 'vp9_cuvid'
+    else:
+        vcodec = None
     for i in range(split):
         try:
-            (
-                ffmpeg
-                .input(str(raw_dir/v),ss=duration*i, t=duration,)
-                .video
-                .output(str(cut_dir/f'{Path(v).stem}_{i}.mp4'), 
-                        vcodec='h264_nvenc',
-                        video_bitrate='500M',)
-                .run()
-            )
+            if vcodec is None :
+                (
+                    ffmpeg
+                    .input(str(raw_dir/v),ss=duration*i, t=duration,)
+                    .video
+                    .output(str(cut_dir/f'{Path(v).stem}_{i}.mp4'), 
+                            vcodec='h264_nvenc',
+                            video_bitrate='500M',)
+                    .run()
+                )
+            else:
+                (
+                    ffmpeg
+                    .input(str(raw_dir/v),ss=duration*i, t=duration,
+                            vcodec=vcodec)
+                    .video
+                    .output(str(cut_dir/f'{Path(v).stem}_{i}.mp4'), 
+                            vcodec='h264_nvenc',
+                            video_bitrate='500M',)
+                    .run()
+                )
+
         except ffmpeg.Error as e:
             print(e.stderr.decode(), file=sys.stderr)
             sys.exit(1)
