@@ -39,6 +39,7 @@ for v in os.listdir(raw_dir):
             (
                 ffmpeg
                 .input(str(raw_dir/v),ss=duration*i, t=duration, an='')
+                .video
                 .output(str(cut_dir/f'{Path(v).stem}_{i}.mp4'), 
                         vcodec='h264_nvenc',
                         video_bitrate='500M',)
