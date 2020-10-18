@@ -379,7 +379,7 @@ if __name__ == '__main__':
     tensorboard_callback = tf.keras.callbacks.TensorBoard(
         log_dir=logdir,
         histogram_freq=1,
-        profile_batch='3,5',
+        profile_batch=0,
         update_freq='epoch'
     )
 
