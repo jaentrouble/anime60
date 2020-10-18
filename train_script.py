@@ -15,6 +15,7 @@ parser.add_argument('-m','--model', dest='model')
 parser.add_argument('-lr', dest='lr')
 parser.add_argument('-n','--name', dest='name')
 parser.add_argument('-e','--epochs', dest='epochs')
+parser.add_argument('-s','--steps', dest='steps', default=0)
 parser.add_argument('-b','--batchsize', dest='batch', default=32)
 parser.add_argument('-mf','--mixedfloat', dest='mixed_float', 
                     action='store_true',default=False)
@@ -52,6 +53,9 @@ epochs = int(args.epochs)
 mixed_float = args.mixed_float
 batch_size = int(args.batch)
 profile = args.profile
+steps_per_epoch = int(args.steps)
+if steps_per_epoch <=0:
+    steps_per_epoch = len(train_vid_paths)*50/batch_size
 
 kwargs = {}
 kwargs['model_f'] = model_f
@@ -59,6 +63,7 @@ kwargs['lr_f'] = lr_f
 kwargs['name'] = name
 kwargs['epochs'] = epochs
 kwargs['batch_size'] = batch_size
+kwargs['steps_per_epoch'] = steps_per_epoch
 kwargs['train_vid_paths'] = train_vid_paths
 kwargs['val_vid_paths'] = val_vid_paths
 kwargs['test_vid_paths'] = val_vid_paths

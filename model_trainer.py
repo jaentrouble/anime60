@@ -384,6 +384,7 @@ def run_training(
         name, 
         epochs, 
         batch_size, 
+        steps_per_epoch,
         train_vid_paths,
         val_vid_paths,
         test_vid_paths,
@@ -446,7 +447,7 @@ def run_training(
     mymodel.fit(
         x=train_ds,
         epochs=epochs,
-        steps_per_epoch=len(train_vid_paths)*50,
+        steps_per_epoch=steps_per_epoch,
         callbacks=[
             tensorboard_callback,
             lr_callback,
