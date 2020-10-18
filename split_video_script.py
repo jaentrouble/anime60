@@ -33,7 +33,7 @@ for v in os.listdir(raw_dir):
         stdout=subprocess.PIPE, 
         stderr=subprocess.STDOUT).stdout
     )
-    split = vid_len // duration
+    split = int(vid_len // duration)
     for i in range(split):
         try:
             (
