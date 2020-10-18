@@ -30,48 +30,12 @@ for i in range(split):
         (
             ffmpeg
             .input(str(raw_dir/(name+ext)),ss=duration*i, t=duration)
-            .output(str(cut_dir/f'{name}_{i}.mp4'), c='copy')
+            .output(str(cut_dir/f'{name}_{i}.mp4'), vcodec='h264_nvenc',
+                    video_bitrate='500M')
             .run()
         )
     except ffmpeg.Error as e:
         print(e.stderr.decode(), file=sys.stderr)
         sys.exit(1)
-# in_process = (
-#     ffmpeg
-#     .input(str(raw_dir/(name+ext)),vcodec=rcodec)
-#     .output('pipe:',format='rawvideo',pix_fmt='rgb24')
-#     .run_async(pipe_stdout=True)
-# )
 
-# # cap = cv2.VideoCapture(str(raw_dir/(name+ext)))
-# while True:
-#     # writer = cv2.VideoWriter(str(cut_dir/f'{name}_{idx}{ext}'),fourcc, 60, (3840,2160)) 
-#     out_process = (
-#         ffmpeg
-#         .input('pipe:', format='rawvideo', pix_fmt='rgb24', s=f'{width}x{height}')
-#         .output(str(cut_dir/f'{name}_{idx}.mp4'), vcodec='h264_nvenc',
-#         video_bitrate='500M')
-#         .overwrite_output()
-#         .run_async(pipe_stdin=True)
-#     )
-#     for i in range(N):
-#         # ret, frame = cap.read()
-#         in_bytes = in_process.stdout.read(width*height*3)
-#         if in_bytes:
-#             out_process.stdin.write(in_bytes)
-#             # writer.write(frame)
-#             total_frames += 1
-#         else :
-#             done = True
-#             break
-
-#     out_process.stdin.close()
-#     out_process.wait()
-#     print(f'{idx} done')
-#     idx += 1
-#     if done:
-#         break
-# in_process.wait()
-
-# cap.release()
 print(f'took {time.time()-start_time} seconds')
