@@ -6,7 +6,7 @@ import custom_layers as clayers
 # Get inputs and return outputs
 
 
-def hr_5_3_0(inputs):
+def hr_5_3_8(inputs):
     x = [inputs]
     x = clayers.HighResolutionModule(
         filters=[8],

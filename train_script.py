@@ -35,7 +35,7 @@ if args.mem_growth:
             print(e)
 
 vid_dir = Path('data/cut')
-vid_paths = [vid_dir/vn for vn in os.listdir(vid_dir)]
+vid_paths = [str(vid_dir/vn) for vn in os.listdir(vid_dir)]
 
 # To make sure data are chosen randomly between data groups
 random.shuffle(vid_paths)

@@ -137,8 +137,8 @@ class AugGenerator():
         # Throw away some frames so data will not use
         # same 6 frames set everytime.
         for i in range(random.randrange(0,6)):
-            if cap.isOpened():
-                ret, _ = cap.read()
+            if self.cap.isOpened():
+                ret, _ = self.cap.read()
                 self.frame_idx += 1
                 if not ret:
                     self.reset_cap()
@@ -149,8 +149,8 @@ class AugGenerator():
         
         sampled_frames = []
         for i in range(6):
-            if cap.isOpened():
-                ret, frame = cap.read()
+            if self.cap.isOpened():
+                ret, frame = self.cap.read()
                 self.frame_idx += 1
                 if ret:
                     sampled_frames.append(frame)
@@ -170,7 +170,7 @@ class AugGenerator():
             sampled_frames.pop(4)
             sampled_frames.reverse()
         
-        height, width = sampled_frames[0].shape[:3]
+        height, width = sampled_frames[0].shape[:2]
         
         # if possible, cut vertically half a time
 
@@ -248,7 +248,22 @@ class ValGenerator(AugGenerator):
             ex) (1280,720) for 720p
         """
         super().__init__(vid_paths, frame_size)
-        self.aug = A.Resize(frame_size[1], frame_size[0]),
+        self.aug = A.Compose([
+            A.Resize(frame_size[1], frame_size[0]),
+        ],
+        additional_targets={
+            'Y0' : 'image',
+            'Y1' : 'image',
+            'X1' : 'image',
+        },
+        )
+        self.aug_noise = A.Compose([
+            A.GaussNoise(0.0,p=0)
+        ],
+        additional_targets={
+            'X1' : 'image',
+        },
+        )
 
 def create_train_dataset(vid_paths, frame_size, batch_size, val_data=False):
     """
@@ -268,7 +283,8 @@ def create_train_dataset(vid_paths, frame_size, batch_size, val_data=False):
             tf.TensorShape([frame_size[1],frame_size[0],6])
         ),
     )
-    dataset = dataset.shuffle(300)
+    if not val_data:
+        dataset = dataset.shuffle(150, reshuffle_each_iteration=False)
     dataset = dataset.batch(batch_size, drop_remainder=True)
     dataset = dataset.prefetch(autotune)
     dataset = dataset.repeat()
@@ -317,7 +333,7 @@ class ValFigCallback(keras.callbacks.Callback):
 
     def val_result_fig(self):
         samples = self.val_ds.take(4).as_numpy_iterator()
-        fig = plt.figure()
+        fig = plt.figure(figsize=(40,40))
         for i in range(4):
             sample = next(samples)
             sample_x = sample[0]
@@ -325,35 +341,35 @@ class ValFigCallback(keras.callbacks.Callback):
             predict = self.model(sample_x, training=False).numpy()
 
             ax = fig.add_subplot(8,4,8*i+1)
-            x0 = sample_x[0][...,:3]
+            x0 = sample_x[0][...,2::-1]
             ax.imshow(x0)
 
-            ax = fig.add_subplot(4,4,8*i+2)
-            p0 = predict[0][...,0:3]
+            ax = fig.add_subplot(8,4,8*i+2)
+            p0 = predict[0][...,2::-1]
             ax.imshow(p0)
             
-            ax = fig.add_subplot(4,4,8*i+3)
-            p1 = predict[0][...,3:6]
+            ax = fig.add_subplot(8,4,8*i+3)
+            p1 = predict[0][...,5:2:-1]
             ax.imshow(p1)
 
-            ax = fig.add_subplot(4,4,8*i+4)
-            x1 = sample_x[0][...,3:6]
+            ax = fig.add_subplot(8,4,8*i+4)
+            x1 = sample_x[0][...,5:2:-1]
             ax.imshow(x1)
 
             ax = fig.add_subplot(8,4,8*i+5)
-            x0 = sample_x[0][...,:3]
+            x0 = sample_x[0][...,2::-1]
             ax.imshow(x0)
 
-            ax = fig.add_subplot(4,4,8*i+6)
-            y0 = sample_y[0][...,0:3]
-            ax.imshow(p0)
+            ax = fig.add_subplot(8,4,8*i+6)
+            y0 = sample_y[0][...,2::-1]
+            ax.imshow(y0)
             
-            ax = fig.add_subplot(4,4,8*i+7)
-            y1 = sample_y[0][...,3:6]
-            ax.imshow(p1)
+            ax = fig.add_subplot(8,4,8*i+7)
+            y1 = sample_y[0][...,5:2:-1]
+            ax.imshow(y1)
 
-            ax = fig.add_subplot(4,4,8*i+8)
-            x1 = sample_x[0][...,3:6]
+            ax = fig.add_subplot(8,4,8*i+8)
+            x1 = sample_x[0][...,5:2:-1]
             ax.imshow(x1)
         return fig
 
@@ -383,7 +399,7 @@ def run_training(
     
     st = time.time()
 
-    inputs = keras.Input((frame_size[1],frame_size[0],3))
+    inputs = keras.Input((frame_size[1],frame_size[0],6))
     mymodel = AnimeModel(inputs, model_f, interpolate_ratios)
     loss = keras.losses.MeanAbsoluteError()
     mymodel.compile(
@@ -447,7 +463,7 @@ def run_training(
     print('Took {} seconds'.format(time.time()-st))
 
     test_ds = create_train_dataset(test_vid_paths,frame_size,batch_size,True)
-    mymodel.evaluate(test_ds, steps=1000)
+    mymodel.evaluate(test_ds, steps=600)
 
 if __name__ == '__main__':
     from flow_models import *
