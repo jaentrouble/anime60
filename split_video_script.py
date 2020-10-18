@@ -40,8 +40,8 @@ for v in os.listdir(raw_dir):
                 ffmpeg
                 .input(str(raw_dir/v),ss=duration*i, t=duration)
                 .output(str(cut_dir/f'{v.stem}_{i}.mp4'), vcodec='h264_nvenc',
-                        video_bitrate='500M')
-                .run()
+                        video_bitrate='500M',)
+                .run(hide_banner=True)
             )
         except ffmpeg.Error as e:
             print(e.stderr.decode(), file=sys.stderr)
