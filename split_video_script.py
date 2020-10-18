@@ -23,7 +23,7 @@ for v in os.listdir(raw_dir):
         [
             'ffprobe', 
             '-v', 
-            'error', 
+            'fatal', 
             '-show_entries', 
             'format=duration', 
             '-of', 
