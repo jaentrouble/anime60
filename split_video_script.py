@@ -41,8 +41,7 @@ for v in os.listdir(raw_dir):
                 .input(str(raw_dir/v),ss=duration*i, t=duration)
                 .output(str(cut_dir/f'{Path(v).stem}_{i}.mp4'), 
                         vcodec='h264_nvenc',
-                        video_bitrate='500M',
-                        hide_banner=True,)
+                        video_bitrate='500M',)
                 .run()
             )
         except ffmpeg.Error as e:
