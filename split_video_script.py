@@ -45,7 +45,8 @@ for v in os.listdir(raw_dir):
             if vcodec is None :
                 (
                     ffmpeg
-                    .input(str(raw_dir/v),ss=duration*i, t=duration,)
+                    .input(str(raw_dir/v),ss=duration*i, t=duration,
+                            r=60)
                     .video
                     .output(str(cut_dir/f'{Path(v).stem}_{i}.mp4'), 
                             vcodec='h264_nvenc',
