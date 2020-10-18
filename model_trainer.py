@@ -11,6 +11,9 @@ import matplotlib.pyplot as plt
 from functools import partial
 import numpy as np
 from extra_models.deep_voxel import VoxelInterp
+import os
+from pathlib import Path
+import cv2
 
 class AnimeModel(keras.Model):
     def __init__(self, inputs, model_function, interpolate_ratios):
@@ -60,64 +63,66 @@ class AnimeModel(keras.Model):
 class AugGenerator():
     """An iterable generator that makes data
 
-    NOTE: 
-        Every img is reshaped to img_size
-    NOTE: 
-        The position value is like pygame. (width, height),
-        which does not match with common image order (height,width)
+        Reads 6 serial frames
 
-        Image input is expected to be the shape of (height, width),
-        i.e. the transformation to match two is handled in here automatically
-    NOTE: 
-        THE OUTPUT IMAGE WILL BE (WIDTH, HEIGHT)
-        It is because pygame has shape (width, height)
+        0   1   2   3   4   5
+        X1      Y1      Y2  X2
+
+        or
+
+        0   1   2   3   4   5
+        X2  Y2      Y1      X1
+
     return
     ------
-    X : np.array, dtype= np.uint8
-        shape : (WIDTH, HEIGHT, 3)
-    Y : np.array, dtype= np.float32
+    X : np.array, dtype= np.float32 Normalized to [0.0,1.0]
+        shape : (HEIGHT, WIDTH, 6)
+    Y : np.array, dtype= np.float32 Normalized to [0.0,1.0]
+        shape : (HEIGHT, WIDTH, 6)
+
     """
-    def __init__(self, img, data, img_size):
+    def __init__(self, vid_paths, frame_size):
         """ 
         arguments
         ---------
-        img : list
-            list of images, in the original size (height, width, 3)
-        data : list of dict
-            Each dict has :
-                'image' : index of the image. The index should match with img
-                'mask' : [xx, yy]
-                        IMPORTANT : (WIDTH, HEIGHT)
-                'box' : [[xmin, ymin], [xmax,ymax]]
-                'size' : the size of the image that the data was created with
-                        IMPORTANT : (WIDTH, HEIGHT)
-        img_size : tuple
-            Desired output image size
-            The axes will be swapped to match pygame.
-            IMPORTANT : (WIDTH, HEIGHT)
+        vid_paths : list of strings or Path objects
+            Each video should have more than 500 frames.
+
+        frame_size : tuple (WIDTH, HEIGHT)
+            Desired output frame size
+            ex) (1280,720) for 720p
         """
-        self.image = img
-        self.data = data
-        self.n = len(data)
-        self.output_size = img_size
+        self.vid_paths = vid_paths
+        self.vid_n = len(self.vid_paths)
+        self.frame_size = frame_size
         self.aug = A.Compose([
             A.OneOf([
                 A.RandomGamma((40,200),p=1),
                 A.RandomBrightness(limit=0.5, p=1),
                 A.RandomContrast(limit=0.5,p=1),
                 A.RGBShift(40,40,40,p=1),
-                A.Downscale(scale_min=0.25,scale_max=0.5,p=1),
                 A.ChannelShuffle(p=1),
             ], p=0.8),
             A.InvertImg(p=0.5),
             A.VerticalFlip(p=0.5),
-            A.RandomRotate90(p=1),
-            A.Resize(img_size[0], img_size[1]),
+            A.HorizontalFlip(p=0.5),
+            A.Resize(frame_size[1], frame_size[0]),
         ],
+        additional_targets={
+            'Y0' : 'image',
+            'Y1' : 'image',
+            'X1' : 'image',
+        },
         )
-        for datum in data:
-            datum['mask_min'] = np.min(datum['mask'], axis=1)
-            datum['mask_max'] = np.max(datum['mask'], axis=1) + 1
+        self.aug_noise = A.Compose([
+            A.GaussNoise((10.0, 50.0),p=0.7)
+        ],
+        additional_targets={
+            'X1' : 'image',
+        },
+        )
+        self.frame_idx = 0
+        self.cap = None
 
     def __iter__(self):
         return self
@@ -126,86 +131,144 @@ class AugGenerator():
         return self
 
     def __next__(self):
-        idx = random.randrange(0,self.n)
-        datum = self.data[idx]
-        image = self.image[datum['image']]
-        x_min, y_min = datum['mask_min']
-        x_max, y_max = datum['mask_max']
+        if self.frame_idx+6 >= 500 or (self.cap is None):
+            self.reset_cap()
 
-        crop_min = (max(0, x_min-random.randrange(5,30)),
-                    max(0, y_min-random.randrange(5,30)))
-        crop_max = (min(datum['size'][0],x_max+random.randrange(5,30)),
-                    min(datum['size'][1],y_max+random.randrange(5,30)))
-        new_mask = np.zeros(np.subtract(crop_max, crop_min), dtype=np.float32)
-        xx, yy = np.array(datum['mask'],dtype=np.int32)
-        m_xx = xx - crop_min[0]
-        m_yy = yy - crop_min[1]
-        new_mask[m_xx,m_yy] = 1
-
-        if np.any(np.not_equal(image.shape[:2], np.flip(datum['size']))):
-            row_ratio = image.shape[0] / datum['size'][1]
-            col_ratio = image.shape[1] / datum['size'][0]
-            cx_min = int(col_ratio*crop_min[0])
-            cy_min = int(row_ratio*crop_min[1])
-            
-            cx_max = int(col_ratio*crop_max[0])
-            cy_max = int(row_ratio*crop_max[1])
-
-            cropped_image = np.swapaxes(image[cy_min:cy_max,cx_min:cx_max],0,1)
-        else:
-            cropped_image = np.swapaxes(
-                image[crop_min[1]:crop_max[1],crop_min[0]:crop_max[0]],
-                0, 
-                1,
-            )
+        # Throw away some frames so data will not use
+        # same 6 frames set everytime.
+        for i in range(random.randrange(0,6)):
+            if cap.isOpened():
+                ret, _ = cap.read()
+                self.frame_idx += 1
+                if not ret:
+                    self.reset_cap()
+                    return self.__next__()
+            else:
+                self.reset_cap()
+                return self.__next__()
         
-        distorted = self.aug(
-            image=cropped_image,
-            mask =new_mask
+        sampled_frames = []
+        for i in range(6):
+            if cap.isOpened():
+                ret, frame = cap.read()
+                self.frame_idx += 1
+                if ret:
+                    sampled_frames.append(frame)
+                else:
+                    self.reset_cap()
+                    return self.__next__()
+            else:
+                self.reset_cap()
+                return self.__next__()
+        
+        # Flip frame order half a time
+        if random.random() > 0.5:
+            sampled_frames.pop(1)
+            sampled_frames.pop(3)
+        else:
+            sampled_frames.pop(2)
+            sampled_frames.pop(4)
+            sampled_frames.reverse()
+        
+        height, width = sampled_frames[0].shape[:3]
+        
+        # if possible, cut vertically half a time
+
+        # frame_size : (width, height) ex) (1280, 720)
+        rotate = False
+        if height>self.frame_size[0] and \
+            width>self.frame_size[1] and \
+            random.random()<0.4:
+
+            crop_height = random.randrange(self.frame_size[0],height)
+            crop_width = random.randrange(self.frame_size[1],width)
+            rotate = True
+        elif random.random()<0.5 :
+            crop_height = random.randrange(self.frame_size[1],height)
+            crop_width = random.randrange(self.frame_size[0],width)
+        else:
+            crop_width, crop_height = self.frame_size
+        crop_min = (random.randrange(0, height-crop_height),
+                    random.randrange(0, width-crop_width))
+        crop_max = (crop_min[0]+crop_height,crop_min[1]+crop_width)
+
+        if rotate:
+            cropped_frames = [f[crop_min[0]:crop_max[0],
+                                crop_min[1]:crop_max[1]].swapaxes(0,1)\
+                                for f in sampled_frames]
+        else:
+            cropped_frames = [f[crop_min[0]:crop_max[0],
+                                crop_min[1]:crop_max[1]]\
+                                for f in sampled_frames]
+        x0, y0, y1, x1 = cropped_frames
+
+        transformed = self.aug(
+            image=x0,
+            Y0=y0,
+            Y1=y1,
+            X1=x1,
+        )
+        x0 = transformed['image']
+        x1 = transformed['X1']
+        y0 = transformed['Y0']
+        y1 = transformed['Y1']
+
+        noised = self.aug_noise(
+            image=x0,
+            X1 =x1
         )
 
-        return distorted['image'], distorted['mask']
+        x0 = noised['image']
+        x1 = noised['X1']
+
+        x_concat = np.concatenate([x0,x1],axis=-1).astype(np.float32)/255.0
+        y_concat = np.concatenate([y0,y1],axis=-1).astype(np.float32)/255.0
+
+        return x_concat, y_concat
+
+    def reset_cap(self):
+        if not(self.cap is None):
+            self.cap.release()
+        vid_idx = random.randrange(0,self.vid_n)
+        self.cap = cv2.VideoCapture(self.vid_paths[vid_idx])
+        self.frame_idx = 0
 
 class ValGenerator(AugGenerator):
     """Same as AugGenerator, but without augmentation.
     """
-    def __init__(self, img, data, img_size):
+    def __init__(self, vid_paths, frame_size):
         """ 
         arguments
         ---------
-        img : list
-            list of images, in the original size (height, width, 3)
-        data : list of dict
-            Each dict has :
-                'image' : index of the image. The index should match with img
-                'mask' : [xx, yy]
-                        IMPORTANT : (WIDTH, HEIGHT)
-                'box' : [[xmin, ymin], [xmax,ymax]]
-                'size' : the size of the image that the data was created with
-                        IMPORTANT : (WIDTH, HEIGHT)
-        img_size : tuple
-            Desired output image size
-            The axes will be swapped to match pygame.
-            IMPORTANT : (WIDTH, HEIGHT)
-        """
-        super().__init__(img, data, img_size)
-        self.aug = A.Resize(img_size[0], img_size[1])
+        vid_paths : list of strings or Path objects
+            Each video should have more than 500 frames.
 
-def create_train_dataset(img, data, img_size, batch_size, val_data=False):
+        frame_size : tuple (WIDTH, HEIGHT)
+            Desired output frame size
+            ex) (1280,720) for 720p
+        """
+        super().__init__(vid_paths, frame_size)
+        self.aug = A.Resize(frame_size[1], frame_size[0]),
+
+def create_train_dataset(vid_paths, frame_size, batch_size, val_data=False):
+    """
+    image_size : tuple
+        (WIDTH, HEIGHT)
+    """
     autotune = tf.data.experimental.AUTOTUNE
     if val_data:
-        generator = ValGenerator(img, data, img_size)
+        generator = ValGenerator(vid_paths, frame_size)
     else:
-        generator = AugGenerator(img, data, img_size)
+        generator = AugGenerator(vid_paths, frame_size)
     dataset = tf.data.Dataset.from_generator(
         generator,
-        output_types=(tf.uint8, tf.float32),
+        output_types=(tf.float32, tf.float32),
         output_shapes=(
-            tf.TensorShape([img_size[0],img_size[1],3]), 
-            tf.TensorShape(img_size)
+            tf.TensorShape([frame_size[1],frame_size[0],6]), 
+            tf.TensorShape([frame_size[1],frame_size[0],6])
         ),
     )
-    dataset = dataset.shuffle(min(len(data),1000))
+    dataset = dataset.shuffle(300)
     dataset = dataset.batch(batch_size, drop_remainder=True)
     dataset = dataset.prefetch(autotune)
     dataset = dataset.repeat()
@@ -253,22 +316,45 @@ class ValFigCallback(keras.callbacks.Callback):
         return image
 
     def val_result_fig(self):
-        sample = self.val_ds.take(1).as_numpy_iterator()
-        sample = next(sample)
-        sample_x = sample[0]
-        sample_y = sample[1]
-        predict = self.model(sample_x, training=False).numpy()
+        samples = self.val_ds.take(4).as_numpy_iterator()
         fig = plt.figure()
-        for i in range(3):
-            ax = fig.add_subplot(3,3,3*i+1)
-            img = sample_x[i]
-            ax.imshow(img)
-            ax = fig.add_subplot(3,3,3*i+2)
-            true_mask = sample_y[i]
-            ax.imshow(true_mask, cmap='binary')
-            ax = fig.add_subplot(3,3,3*i+3)
-            p = predict[i]
-            ax.imshow(p, cmap='binary')
+        for i in range(4):
+            sample = next(samples)
+            sample_x = sample[0]
+            sample_y = sample[1]
+            predict = self.model(sample_x, training=False).numpy()
+
+            ax = fig.add_subplot(8,4,8*i+1)
+            x0 = sample_x[0][...,:3]
+            ax.imshow(x0)
+
+            ax = fig.add_subplot(4,4,8*i+2)
+            p0 = predict[0][...,0:3]
+            ax.imshow(p0)
+            
+            ax = fig.add_subplot(4,4,8*i+3)
+            p1 = predict[0][...,3:6]
+            ax.imshow(p1)
+
+            ax = fig.add_subplot(4,4,8*i+4)
+            x1 = sample_x[0][...,3:6]
+            ax.imshow(x1)
+
+            ax = fig.add_subplot(8,4,8*i+5)
+            x0 = sample_x[0][...,:3]
+            ax.imshow(x0)
+
+            ax = fig.add_subplot(4,4,8*i+6)
+            y0 = sample_y[0][...,0:3]
+            ax.imshow(p0)
+            
+            ax = fig.add_subplot(4,4,8*i+7)
+            y1 = sample_y[0][...,3:6]
+            ax.imshow(p1)
+
+            ax = fig.add_subplot(4,4,8*i+8)
+            x1 = sample_x[0][...,3:6]
+            ax.imshow(x1)
         return fig
 
     def on_epoch_end(self, epoch, logs=None):
@@ -282,40 +368,45 @@ def run_training(
         name, 
         epochs, 
         batch_size, 
-        train_data,
-        val_data,
-        img,
-        img_size,
+        train_vid_paths,
+        val_vid_paths,
+        test_vid_paths,
+        frame_size,
+        interpolate_ratios,
         mixed_float = True,
         notebook = True,
+        profile = False,
     ):
-    """
-    val_data : (X_val, Y_val) tuple
-    """
     if mixed_float:
         policy = mixed_precision.Policy('mixed_float16')
         mixed_precision.set_policy(policy)
     
     st = time.time()
 
-    inputs = keras.Input((200,200,3))
-    mymodel = AdiposeModel(inputs, model_f)
-    loss = keras.losses.BinaryCrossentropy(from_logits=True)
+    inputs = keras.Input((frame_size[1],frame_size[0],3))
+    mymodel = AnimeModel(inputs, model_f, interpolate_ratios)
+    loss = keras.losses.MeanAbsoluteError()
     mymodel.compile(
         optimizer='adam',
         loss=loss,
-        metrics=[
-            keras.metrics.BinaryAccuracy(threshold=0.5),
-        ]
     )
 
     logdir = 'logs/fit/' + name
-    tensorboard_callback = tf.keras.callbacks.TensorBoard(
-        log_dir=logdir,
-        histogram_freq=1,
-        profile_batch='3,5',
-        update_freq='epoch'
-    )
+    if profile:
+        tensorboard_callback = tf.keras.callbacks.TensorBoard(
+            log_dir=logdir,
+            histogram_freq=1,
+            profile_batch='3,5',
+            update_freq='epoch'
+        )
+    else :
+        tensorboard_callback = tf.keras.callbacks.TensorBoard(
+            log_dir=logdir,
+            histogram_freq=1,
+            profile_batch=0,
+            update_freq='epoch'
+        )
+
     lr_callback = keras.callbacks.LearningRateScheduler(lr_f, verbose=1)
 
     savedir = 'savedmodels/' + name + '/{epoch}'
@@ -326,20 +417,20 @@ def run_training(
     )
 
     if notebook:
-        tqdm_callback = TqdmNotebookCallback(metrics=['loss', 'binary_accuracy'],
+        tqdm_callback = TqdmNotebookCallback(metrics=['loss'],
                                             leave_inner=False)
     else:
         tqdm_callback = TqdmCallback()
 
-    train_ds = create_train_dataset(img, train_data, img_size,batch_size)
-    val_ds = create_train_dataset(img, val_data, img_size,batch_size,True)
+    train_ds = create_train_dataset(train_vid_paths,frame_size,batch_size)
+    val_ds = create_train_dataset(val_vid_paths,frame_size,batch_size,True)
 
     image_callback = ValFigCallback(val_ds, logdir)
 
     mymodel.fit(
         x=train_ds,
         epochs=epochs,
-        steps_per_epoch=len(train_data)//batch_size,
+        steps_per_epoch=len(train_vid_paths)*50,
         callbacks=[
             tensorboard_callback,
             lr_callback,
@@ -355,7 +446,8 @@ def run_training(
 
     print('Took {} seconds'.format(time.time()-st))
 
-    mymodel.evaluate(val_ds, steps=1000)
+    test_ds = create_train_dataset(test_vid_paths,frame_size,batch_size,True)
+    mymodel.evaluate(test_ds, steps=1000)
 
 if __name__ == '__main__':
     from flow_models import *

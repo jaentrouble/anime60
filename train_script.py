@@ -1,6 +1,6 @@
 import numpy as np
 from model_trainer import run_training
-import adipose_models
+import flow_models
 import model_lr
 import argparse
 import tensorflow as tf
@@ -20,6 +20,9 @@ parser.add_argument('-mf','--mixedfloat', dest='mixed_float',
                     action='store_true',default=False)
 parser.add_argument('-mg','--memorygrow', dest='mem_growth',
                     action='store_true',default=False)
+parser.add_argument('-pf','--profile', dest='profile',
+                    action='store_true',default=False)
+
 args = parser.parse_args()
 
 if args.mem_growth:
@@ -31,46 +34,24 @@ if args.mem_growth:
         except RuntimeError as e:
             print(e)
 
-data_dir = Path('data')
-data_groups = next(os.walk(data_dir))[1]
-img = []
-data = []
-img_name_dict = {}
-img_idx = 0
-for dg in data_groups[:]:
-    img_dir = data_dir/dg/'done'
-    img_names = os.listdir(img_dir)
-    for name in img_names:
-        img_path = str(img_dir/name)
-        img.append(io.imread(img_path))
-        img_name_dict[img_path] = img_idx
-        img_idx += 1
+vid_dir = Path('data/cut')
+vid_paths = [vid_dir/vn for vn in os.listdir(vid_dir)]
 
-    json_dir = data_dir/dg/'save'
-    json_names = os.listdir(json_dir)
-    dg_data = []
-    for name in json_names[:]:
-        with open(str(json_dir/name),'r') as j:
-            dg_data.extend(json.load(j))
-    for dg_datum in dg_data :
-        long_img_name = str(img_dir/dg_datum['image'])
-        dg_datum['image'] = img_name_dict[long_img_name]
-    data.extend(dg_data)
-
-test_num = len(data) // 10
 # To make sure data are chosen randomly between data groups
-random.shuffle(data)
+random.shuffle(vid_paths)
 
-data_train = data[:-2*test_num]
-data_val = data[-2*test_num:-test_num]
-data_test = data[-test_num:]
+test_num = len(vid_paths) // 10
+train_vid_paths = vid_paths[:-2*test_num]
+val_vid_paths = vid_paths[-2*test_num:-test_num]
+test_vid_paths = vid_paths[-test_num:]
 
-model_f = getattr(adipose_models, args.model)
+model_f = getattr(flow_models, args.model)
 lr_f = getattr(model_lr, args.lr)
 name = args.name
 epochs = int(args.epochs)
 mixed_float = args.mixed_float
 batch_size = int(args.batch)
+profile = args.profile
 
 kwargs = {}
 kwargs['model_f'] = model_f
@@ -78,11 +59,13 @@ kwargs['lr_f'] = lr_f
 kwargs['name'] = name
 kwargs['epochs'] = epochs
 kwargs['batch_size'] = batch_size
-kwargs['train_data'] = data_train
-kwargs['val_data'] = data_val
-kwargs['img'] = img
-kwargs['img_size'] = (200,200)
+kwargs['train_vid_paths'] = train_vid_paths
+kwargs['val_vid_paths'] = val_vid_paths
+kwargs['test_vid_paths'] = val_vid_paths
+kwargs['frame_size'] = (1280,720)
+kwargs['interpolate_ratios'] = [0.4, 0.8]
 kwargs['mixed_float'] = mixed_float
 kwargs['notebook'] = False
+kwargs['profile'] = profile
 
 run_training(**kwargs)
