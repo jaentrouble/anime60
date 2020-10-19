@@ -33,11 +33,25 @@ class VoxelInterp(layers.Layer):
     def __init__(
         self,
         interpolate_ratios,
+        gamma_flow=0.01,
+        gamma_mask=0.005,
         **kwargs,
     ):
+        """
+        Arguments
+        ---------
+        interpolate_ratios : list
+            list of floats in [0.0, 1.0], where the interpolated frames should be
+        gamma_motion : float
+            total variation regularization weight for voxel flow
+        gamma_mask : float
+            total variation regularization weight for temporal component
+        """
         super().__init__(**kwargs)
         self.interpolate_ratios = interpolate_ratios
         self.frame_n = len(self.interpolate_ratios)
+        self.gamma_flow = gamma_flow
+        self.gamma_mask = gamma_mask
 
     def build(self, input_shape):
         if not isinstance(input_shape,list):
@@ -74,6 +88,13 @@ class VoxelInterp(layers.Layer):
         for i in range(self.frame_n):
             flow = net[...,i*3:i*3+2]
             mask = net[...,i*3+2:i*3+3]
+
+            self.add_loss(
+                self.gamma_flow * tf.reduce_sum(tf.image.total_variation(flow))
+            )
+            self.add_loss(
+                self.gamma_mask * tf.reduce_sum(tf.image.total_variation(mask))
+            )
 
             alpha = self.interpolate_ratios[i]
 
@@ -160,3 +181,6 @@ class VoxelInterp(layers.Layer):
     def get_config(self):
         config = super().get_config()
         config['interpolate_ratios'] = self.interpolate_ratios
+        config['gamma_motion'] = self.gamma_motion
+        config['gamma_mask'] = self.gamma_mask
+        return config

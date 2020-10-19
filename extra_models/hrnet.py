@@ -3,7 +3,7 @@ from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow import nn
 
-BN_MOMENTUM = 0.99
+BN_MOMENTUM = 0.9999
 
 def conv3x3(filters, stride=1):
     """A 3x3 Conv2D layer with 'same' padding"""
