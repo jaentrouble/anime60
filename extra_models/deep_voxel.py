@@ -122,8 +122,8 @@ class VoxelInterp(layers.Layer):
         height_f = tf.cast(height, tf.float32)
         width_f = tf.cast(width, tf.float32)
 
-        hh = (new_hh-1) * (height_f-1) / 2
-        ww = (new_ww-1) * (width_f-1) / 2
+        hh = (new_hh+1) * (height_f-1) / 2
+        ww = (new_ww+1) * (width_f-1) / 2
 
         h0 = tf.cast(tf.floor(hh), tf.int32)
         h1 = h0 + 1
