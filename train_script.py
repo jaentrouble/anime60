@@ -23,6 +23,7 @@ parser.add_argument('-mg','--memorygrow', dest='mem_growth',
                     action='store_true',default=False)
 parser.add_argument('-pf','--profile', dest='profile',
                     action='store_true',default=False)
+parser.add_argument('--load',dest='load',default=False)
 
 args = parser.parse_args()
 
@@ -56,6 +57,7 @@ profile = args.profile
 steps_per_epoch = int(args.steps)
 if steps_per_epoch <=0:
     steps_per_epoch = len(train_vid_paths)*50/batch_size
+load_model_path = args.load
 
 kwargs = {}
 kwargs['model_f'] = model_f
@@ -72,5 +74,6 @@ kwargs['interpolate_ratios'] = [0.4, 0.8]
 kwargs['mixed_float'] = mixed_float
 kwargs['notebook'] = False
 kwargs['profile'] = profile
+kwargs['load_model_path'] = load_model_path
 
 run_training(**kwargs)

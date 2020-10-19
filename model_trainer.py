@@ -393,6 +393,7 @@ def run_training(
         mixed_float = True,
         notebook = True,
         profile = False,
+        load_model_path = None,
     ):
     if mixed_float:
         policy = mixed_precision.Policy('mixed_float16')
@@ -402,6 +403,9 @@ def run_training(
 
     inputs = keras.Input((frame_size[1],frame_size[0],6))
     mymodel = AnimeModel(inputs, model_f, interpolate_ratios)
+    if load_model_path:
+        mymodel.load_weights(load_model_path)
+        print(f'Loaded from : {load_model_path}')
     loss = keras.losses.MeanAbsoluteError()
     mymodel.compile(
         optimizer='adam',
