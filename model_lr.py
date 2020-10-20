@@ -69,6 +69,16 @@ def lr_step6(epoch, lr):
             lr = lr * 0.95
     return lr
 
+def lr_step7(epoch, lr):
+    if epoch <= 20:
+        lr = 5e-5
+    elif epoch <= 40 :
+        lr = 2e-5
+    else :
+        if epoch % 5 == 0 :
+            lr = 1e-5/(epoch+1)
+    return lr
+
 def lr_mul_inv(epoch, lr):
     return 0.01 / (epoch+1)
 
