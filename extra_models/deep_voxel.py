@@ -94,11 +94,11 @@ class VoxelInterp(layers.Layer):
 
             self.add_loss(
                 self.gamma_flow * tf.reduce_sum(tf.image.total_variation(flow))\
-                    /batch_size
+                    /tf.cast(batch_size,tf.float32)
             )
             self.add_loss(
                 self.gamma_mask * tf.reduce_sum(tf.image.total_variation(mask))\
-                    /batch_size
+                    /tf.cast(batch_size,tf.float32)
             )
 
             alpha = self.interpolate_ratios[i]
