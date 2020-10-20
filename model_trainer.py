@@ -467,7 +467,7 @@ def run_training(
     delta = time.time()-st
     hours, remain = divmod(delta, 3600)
     minutes, seconds = divmod(remain, 60)
-    print(f'Took {hours}hours {minutes}minutes {seconds}seconds')
+    print(f'Took {hours:.0f} hours {minutes:.0f} minutes {seconds:.2f} seconds')
 
     test_ds = create_train_dataset(test_vid_paths,frame_size,batch_size,True)
     mymodel.evaluate(test_ds, steps=600)
