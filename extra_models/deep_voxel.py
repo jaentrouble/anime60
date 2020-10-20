@@ -2,8 +2,8 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 
-GAMMA_FLOW = 0.001
-GAMMA_MASK = 0.0005
+GAMMA_FLOW = 0.0
+GAMMA_MASK = 0.0
 
 class VoxelInterp(layers.Layer):
     r"""Voxel interpreter
@@ -93,10 +93,12 @@ class VoxelInterp(layers.Layer):
             mask = net[...,i*3+2:i*3+3]
 
             self.add_loss(
-                self.gamma_flow * tf.reduce_sum(tf.image.total_variation(flow))
+                self.gamma_flow * tf.reduce_sum(tf.image.total_variation(flow))\
+                    /batch_size
             )
             self.add_loss(
-                self.gamma_mask * tf.reduce_sum(tf.image.total_variation(mask))
+                self.gamma_mask * tf.reduce_sum(tf.image.total_variation(mask))\
+                    /batch_size
             )
 
             alpha = self.interpolate_ratios[i]
