@@ -10,6 +10,7 @@ import subprocess
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-d','--duration', dest='duration')
+parser.add_argument('-b','--bitrate',dest='bitrate')
 args = parser.parse_args()
 
 raw_dir = Path('data/raw')
@@ -50,7 +51,7 @@ for v in os.listdir(raw_dir):
                     .video
                     .output(str(cut_dir/f'{Path(v).stem}_{i}.mp4'), 
                             vcodec='h264_nvenc',
-                            video_bitrate='100K',)
+                            video_bitrate=args.bitrate,)
                     .run()
                 )
             else:
