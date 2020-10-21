@@ -92,6 +92,9 @@ class VoxelInterp(layers.Layer):
             flow = net[...,i*3:i*3+2]
             mask = net[...,i*3+2:i*3+3]
 
+            tf.summary.histogram(f'flow_{i}',flow)
+            tf.summary.histogram(f'mask_{i}',mask)
+
             self.add_loss(
                 self.gamma_flow * tf.reduce_sum(tf.image.total_variation(flow))\
                     /tf.cast(batch_size,tf.float32)
