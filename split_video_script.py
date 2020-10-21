@@ -50,7 +50,7 @@ for v in os.listdir(raw_dir):
                     .video
                     .output(str(cut_dir/f'{Path(v).stem}_{i}.mp4'), 
                             vcodec='h264_nvenc',
-                            video_bitrate='500M',)
+                            video_bitrate='100K',)
                     .run()
                 )
             else:
