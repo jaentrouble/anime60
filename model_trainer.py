@@ -97,10 +97,10 @@ class AugGenerator():
         self.frame_size = frame_size
         self.aug = A.Compose([
             A.OneOf([
-                A.RandomGamma((40,200),p=1),
-                A.RandomBrightness(limit=0.5, p=1),
-                A.RandomContrast(limit=0.5,p=1),
-                A.RGBShift(40,40,40,p=1),
+                # A.RandomGamma((40,200),p=1),
+                # A.RandomBrightness(limit=0.5, p=1),
+                # A.RandomContrast(limit=0.5,p=1),
+                # A.RGBShift(40,40,40,p=1),
                 A.ChannelShuffle(p=1),
             ], p=0.8),
             A.InvertImg(p=0.5),

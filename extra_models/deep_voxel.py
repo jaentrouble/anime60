@@ -2,8 +2,8 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 
-GAMMA_FLOW = 0.0
-GAMMA_MASK = 0.0
+GAMMA_FLOW = 0.0001
+GAMMA_MASK = 0.00005
 
 class VoxelInterp(layers.Layer):
     r"""Voxel interpreter
