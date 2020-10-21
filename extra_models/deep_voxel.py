@@ -67,9 +67,11 @@ class VoxelInterp(layers.Layer):
         
         self.conv = layers.Conv2D(3*self.frame_n,1, 
                                   activation='tanh', dtype='float32')
+        self.step_counter = tf.Variable(0,trainable=False,dtype=tf.int64)
         
 
     def call(self, inputs):
+        self.step_counter.assign_add(1)
         frame0 = inputs[0][...,0:3]
         frame1 = inputs[0][...,3:6]
         encoded_image = inputs[1]
@@ -92,8 +94,8 @@ class VoxelInterp(layers.Layer):
             flow = net[...,i*3:i*3+2]
             mask = net[...,i*3+2:i*3+3]
 
-            tf.summary.histogram(f'flow_{i}',flow)
-            tf.summary.histogram(f'mask_{i}',mask)
+            tf.summary.histogram(f'flow_{i}',flow, step=self.step_counter)
+            tf.summary.histogram(f'mask_{i}',mask, step=self.step_counter)
 
             self.add_loss(
                 self.gamma_flow * tf.reduce_sum(tf.image.total_variation(flow))\

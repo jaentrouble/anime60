@@ -418,14 +418,14 @@ def run_training(
             log_dir=logdir,
             histogram_freq=1,
             profile_batch='3,5',
-            update_freq='epoch'
+            update_freq=steps_per_epoch
         )
     else :
         tensorboard_callback = tf.keras.callbacks.TensorBoard(
             log_dir=logdir,
             histogram_freq=1,
             profile_batch=0,
-            update_freq='epoch'
+            update_freq=steps_per_epoch
         )
 
     lr_callback = keras.callbacks.LearningRateScheduler(lr_f, verbose=1)
@@ -469,8 +469,8 @@ def run_training(
     minutes, seconds = divmod(remain, 60)
     print(f'Took {hours:.0f} hours {minutes:.0f} minutes {seconds:.2f} seconds')
 
-    test_ds = create_train_dataset(test_vid_paths,frame_size,batch_size,True)
-    mymodel.evaluate(test_ds, steps=600)
+    # test_ds = create_train_dataset(test_vid_paths,frame_size,batch_size,True)
+    # mymodel.evaluate(test_ds, steps=600)
 
 if __name__ == '__main__':
     from flow_models import *
