@@ -79,7 +79,7 @@ def lr_step7(epoch, lr):
             lr = 1e-5/(epoch-40)
     return lr
 
-def lr_step7(epoch, lr):
+def lr_step8(epoch, lr):
     if epoch <= 20:
         lr = 5e-7
     elif epoch <= 40 :
