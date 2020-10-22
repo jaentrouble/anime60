@@ -2,8 +2,8 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 
-GAMMA_FLOW = 0.000001
-GAMMA_MASK = 0.0000005
+GAMMA_FLOW = 0.01
+GAMMA_MASK = 0.005
 
 class VoxelInterp(layers.Layer):
     r"""Voxel interpreter
@@ -81,6 +81,7 @@ class VoxelInterp(layers.Layer):
         batch_size = tf.shape(frame0)[0]
         height = tf.shape(frame0)[1]
         width = tf.shape(frame0)[2]
+        total_pixels = tf.reduce_prod(tf.shape(frame0))
 
         _, hh, ww = tf.meshgrid(
             tf.range(batch_size, dtype=tf.float32),
@@ -99,11 +100,11 @@ class VoxelInterp(layers.Layer):
 
             self.add_loss(
                 self.gamma_flow * tf.reduce_sum(tf.image.total_variation(flow))\
-                    /tf.cast(batch_size,tf.float32)
+                    /tf.cast(total_pixels,tf.float32)
             )
             self.add_loss(
                 self.gamma_mask * tf.reduce_sum(tf.image.total_variation(mask))\
-                    /tf.cast(batch_size,tf.float32)
+                    /tf.cast(total_pixels,tf.float32)
             )
 
             alpha = self.interpolate_ratios[i]
