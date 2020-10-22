@@ -65,8 +65,11 @@ class VoxelInterp(layers.Layer):
                              'Frame0 & Frame1 concat, Encoded_image\n'
                              f'But got {len(input_shape)} inputs')
         
-        self.conv = layers.Conv2D(3*self.frame_n,1, 
+        # self.conv = layers.Conv2D(3*self.frame_n,1, 
+        #                           activation='tanh', dtype='float32')
+        self.conv = layers.Conv2D(2+self.frame_n,1, 
                                   activation='tanh', dtype='float32')
+
         self.step_counter = tf.Variable(0,trainable=False,dtype=tf.int64)
         
 
@@ -91,17 +94,26 @@ class VoxelInterp(layers.Layer):
         )
 
         output_frames = []
-        for i in range(self.frame_n):
-            flow = net[...,i*3:i*3+2]
-            mask = net[...,i*3+2:i*3+3]
+        flow = net[...,0:2]
+        tf.summary.histogram('flow',flow, step=self.step_counter)
+        self.add_loss(
+            self.gamma_flow * tf.reduce_sum(tf.image.total_variation(flow))\
+                /tf.cast(total_pixels,tf.float32)
+        )
 
-            tf.summary.histogram(f'flow_{i}',flow, step=self.step_counter)
+
+
+        for i in range(self.frame_n):
+            # flow = net[...,i*3:i*3+2]
+            mask = net[...,i+2:i+3]
+
+            # tf.summary.histogram(f'flow_{i}',flow, step=self.step_counter)
             tf.summary.histogram(f'mask_{i}',mask, step=self.step_counter)
 
-            self.add_loss(
-                self.gamma_flow * tf.reduce_sum(tf.image.total_variation(flow))\
-                    /tf.cast(total_pixels,tf.float32)
-            )
+            # self.add_loss(
+            #     self.gamma_flow * tf.reduce_sum(tf.image.total_variation(flow))\
+            #         /tf.cast(total_pixels,tf.float32)
+            # )
             self.add_loss(
                 self.gamma_mask * tf.reduce_sum(tf.image.total_variation(mask))\
                     /tf.cast(total_pixels,tf.float32)
