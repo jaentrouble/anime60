@@ -96,14 +96,14 @@ class AugGenerator():
         self.vid_n = len(self.vid_paths)
         self.frame_size = frame_size
         self.aug = A.Compose([
-            A.OneOf([
-                # A.RandomGamma((40,200),p=1),
-                # A.RandomBrightness(limit=0.5, p=1),
-                # A.RandomContrast(limit=0.5,p=1),
-                # A.RGBShift(40,40,40,p=1),
-                A.ChannelShuffle(p=1),
-            ], p=0.8),
-            A.InvertImg(p=0.5),
+            # A.OneOf([
+            #     A.RandomGamma((40,200),p=1),
+            #     A.RandomBrightness(limit=0.5, p=1),
+            #     A.RandomContrast(limit=0.5,p=1),
+            #     A.RGBShift(40,40,40,p=1),
+            #     A.ChannelShuffle(p=1),
+            # ], p=0.8),
+            # A.InvertImg(p=0.5),
             A.VerticalFlip(p=0.5),
             A.HorizontalFlip(p=0.5),
             A.Resize(frame_size[1], frame_size[0]),
@@ -115,7 +115,7 @@ class AugGenerator():
         },
         )
         self.aug_noise = A.Compose([
-            A.GaussNoise((10.0, 50.0),p=0.7)
+            A.GaussNoise((0.0, 0.0),p=0.0)
         ],
         additional_targets={
             'X1' : 'image',
