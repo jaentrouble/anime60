@@ -130,8 +130,8 @@ class AugGenerator():
             self.reset_cap()
 
         # Throw away some frames so data will not use
-        # same 6 frames set everytime.
-        for i in range(random.randrange(0,6)):
+        # same frames set everytime.
+        for i in range(random.randrange(0,30)):
             if self.cap.isOpened():
                 ret, _ = self.cap.read()
                 self.frame_idx += 1
@@ -279,7 +279,7 @@ def create_train_dataset(vid_paths, frame_size, batch_size, val_data=False):
         ),
     )
     if not val_data:
-        dataset = dataset.shuffle(150, reshuffle_each_iteration=False)
+        dataset = dataset.shuffle(450, reshuffle_each_iteration=False)
     dataset = dataset.batch(batch_size, drop_remainder=True)
     dataset = dataset.prefetch(autotune)
     dataset = dataset.repeat()
