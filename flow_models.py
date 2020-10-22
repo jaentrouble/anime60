@@ -39,3 +39,27 @@ def hr_5_3_8(inputs):
     )(x)
     outputs = layers.Activation('linear', dtype='float32')(x[0])
     return outputs
+
+def hr_3_2_24(inputs):
+    x = [inputs]
+    x = clayers.HighResolutionModule(
+        filters=[24],
+        blocks=[2],
+        name='HR_0'
+    )(x)
+    x = clayers.HighResolutionModule(
+        filters=[24,48],
+        blocks=[2,2],
+        name='HR_1'
+    )(x)
+    x = clayers.HighResolutionModule(
+        filters=[24,48,96],
+        blocks=[2,2,2],
+        name='HR_2'
+    )(x)
+    x = clayers.HighResolutionFusion(
+        filters=[32],
+        name='Fusion_0'
+    )(x)
+    outputs = layers.Activation('linear', dtype='float32')(x[0])
+    return outputs
