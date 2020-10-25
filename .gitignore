@@ -128,3 +128,4 @@ dmypy.json
 data/
 logs/
 savedmodels/
+*.exe
