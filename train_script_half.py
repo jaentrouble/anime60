@@ -1,10 +1,12 @@
+import os
+os.environ['TF_GPU_THREAD_MODE'] = 'gpu_private'
+
 import numpy as np
 from model_trainer_half import run_training
 import flow_models
 import model_lr
 import argparse
 import tensorflow as tf
-import os
 import imageio as io
 import json
 from pathlib import Path
