@@ -130,14 +130,14 @@ class VoxelInterp(layers.Layer):
             output_0 = self.bilinear_interp(frame0, coor_h_0, coor_w_0)
             output_1 = self.bilinear_interp(frame1, coor_h_1, coor_w_1)
 
-            mask = 0.5 * (1+mask) # Normalize to (0.0, 1.0)
+            mask = (1-alpha) * (1+mask) # Normalize to (0.0, 1.0)
             output = mask*output_0 + (1-mask)*output_1
             output_frames.append(output)
 
         stacked = tf.concat(output_frames, axis=-1)
         return stacked
 
-
+    @tf.function
     def bilinear_interp(self, image, new_hh, new_ww):
         """Perform bilinear sampling on im given x, y coordinates
   
