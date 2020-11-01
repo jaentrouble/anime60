@@ -67,7 +67,7 @@ class VoxelInterp(layers.Layer):
         
         # self.conv = layers.Conv2D(3*self.frame_n,1, 
         #                           activation='tanh', dtype='float32')
-        self.conv = layers.Conv2D(3, 1, 
+        self.conv = layers.Conv2D(3, 3, padding='same',
                                   activation='tanh', dtype='float32')
 
         self.step_counter = tf.Variable(0,trainable=False,dtype=tf.int64)
