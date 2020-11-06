@@ -32,6 +32,9 @@ weight_dir = args.weight
 
 inputs = tf.keras.Input((frame_size[1],frame_size[0],6))
 anime_model = AnimeModel(inputs, model_f, interp_ratio)
+anime_model.compile(
+    optimizer='adam',
+)
 anime_model.load_weights(weight_dir)
 
 vid_dir = Path('interp')
