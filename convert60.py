@@ -43,7 +43,7 @@ vid_paths = [str(vid_dir/vn) for vn in os.listdir(vid_dir)]
 for vid_path in vid_paths:
     print(f'{vid_path} start')
     cap = cv2.VideoCapture(vid_path)
-    fourcc = cv2.VideoWriter_fourcc(*'X264')
+    fourcc = cv2.VideoWriter_fourcc(*'MP4V')
     writer = cv2.VideoWriter(f'{os.path.splitext(vid_path)[0]}_interp.mp4',fourcc,60,frame_size)
     ret, frame = cap.read()
     t = tqdm(unit='frames')
