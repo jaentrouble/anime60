@@ -7,6 +7,7 @@ from pathlib import Path
 import cv2
 from tqdm import tqdm
 import argparse
+import os
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-w','--weight', dest='weight')
