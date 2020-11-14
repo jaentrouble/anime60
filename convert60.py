@@ -37,7 +37,7 @@ anime_model.compile(
 )
 anime_model.load_weights(weight_dir)
 
-vid_dir = Path('interp')
+vid_dir = Path('interp/to_convert')
 vid_paths = [str(vid_dir/vn) for vn in os.listdir(vid_dir)]
 
 for vid_path in vid_paths:
