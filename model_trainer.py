@@ -1,6 +1,6 @@
 import tensorflow as tf
 from tensorflow import keras
-from tensorflow.keras.mixed_precision import experimental as mixed_precision
+from tensorflow.keras import mixed_precision
 import time
 from custom_tqdm import TqdmNotebookCallback
 from tqdm.keras import TqdmCallback
@@ -397,7 +397,7 @@ def run_training(
     ):
     if mixed_float:
         policy = mixed_precision.Policy('mixed_float16')
-        mixed_precision.set_policy(policy)
+        mixed_precision.set_global_policy(policy)
     
     st = time.time()
 
