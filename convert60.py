@@ -1,7 +1,7 @@
 import tensorflow as tf
 from flow_models import *
 from model_trainer import AnimeModel
-from tensorflow.keras.mixed_precision import experimental as mixed_precision
+from tensorflow.keras import mixed_precision
 import numpy as np
 from pathlib import Path
 import cv2
