@@ -23,7 +23,7 @@ if gpus:
     except RuntimeError as e:
         print(e)
 policy = mixed_precision.Policy('mixed_float16')
-mixed_precision.set_policy(policy)
+mixed_precision.set_global_policy(policy)
 
 frame_size = (960,540)
 interp_ratio = [0.4,0.8]
