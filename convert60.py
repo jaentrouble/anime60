@@ -38,13 +38,19 @@ anime_model.compile(
 anime_model.load_weights(weight_dir)
 
 vid_dir = Path('interp/to_convert')
-vid_paths = [str(vid_dir/vn) for vn in os.listdir(vid_dir)]
+interp_dir = Path('interp')
+vid_names = os.listdir(vid_dir)
 
-for vid_path in vid_paths:
-    print(f'{vid_path} start')
-    cap = cv2.VideoCapture(vid_path)
+for vid_name in vid_names:
+    print(f'{vid_name} start')
+    cap = cv2.VideoCapture(str(vid_dir/vid_name))
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    writer = cv2.VideoWriter(f'{os.path.splitext(vid_path)[0]}_interp.mp4',fourcc,60,frame_size)
+    writer = cv2.VideoWriter(
+        str(interp_dir/f'{os.path.splitext(vid_name)[0]}_interp.mp4'),
+        fourcc,
+        60,
+        frame_size
+    )
     ret, frame = cap.read()
     t = tqdm(unit='frames')
     while cap.isOpened():
