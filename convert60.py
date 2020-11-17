@@ -92,4 +92,4 @@ for vid_name in vid_names:
     t.close()
     cap.release()
     writer.release()
-    print(f'{vid_path} end')
+    print(f'{vid_name} end')
