@@ -173,18 +173,22 @@ class AugGenerator():
         rotate = False
         if height>self.frame_size[0] and \
             width>self.frame_size[1] and \
-            random.random()<0.4:
+            random.random()<0.3:
 
-            crop_height = random.randrange(self.frame_size[0],height)
-            crop_width = random.randrange(self.frame_size[1],width)
+            # crop_height = random.randint(self.frame_size[0],height)
+            # crop_width = random.randint(self.frame_size[1],width)
+            crop_height = self.frame_size[0]
+            crop_width = self.frame_size[1]
             rotate = True
         elif random.random()<0.5 :
-            crop_height = random.randrange(self.frame_size[1],height)
-            crop_width = random.randrange(self.frame_size[0],width)
+            # crop_height = random.randint(self.frame_size[1],height)
+            # crop_width = random.randint(self.frame_size[0],width)
+            crop_height = height
+            crop_width = width
         else:
             crop_width, crop_height = self.frame_size
-        crop_min = (random.randrange(0, height-crop_height),
-                    random.randrange(0, width-crop_width))
+        crop_min = (random.randint(0, height-crop_height),
+                    random.randint(0, width-crop_width))
         crop_max = (crop_min[0]+crop_height,crop_min[1]+crop_width)
 
         if rotate:
