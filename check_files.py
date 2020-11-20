@@ -12,3 +12,4 @@ for v in os.listdir(cut_dir):
         if not ret:
             break
     cap.release()
+print('finished')
