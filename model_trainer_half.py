@@ -295,7 +295,7 @@ def create_train_dataset(
         vid_paths, 
         frame_size, 
         batch_size, 
-        parallel=8,
+        parallel=4,
         val_data=False
     ):
     """
