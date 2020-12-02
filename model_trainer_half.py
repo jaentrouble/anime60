@@ -293,24 +293,48 @@ class ValGenerator(AugGenerator):
         },
         )
 
-def create_train_dataset(vid_paths, frame_size, batch_size, val_data=False):
+def create_train_dataset(
+        vid_paths, 
+        frame_size, 
+        batch_size, 
+        parallel=8,
+        val_data=False
+    ):
     """
     image_size : tuple
         (WIDTH, HEIGHT)
     """
+    num_vids = len(vid_paths)
     autotune = tf.data.experimental.AUTOTUNE
     if val_data:
-        generator = ValGenerator(vid_paths, frame_size)
+        generator = ValGenerator
     else:
-        generator = AugGenerator(vid_paths, frame_size)
-    dataset = tf.data.Dataset.from_generator(
-        generator,
-        output_types=(tf.float32, tf.float32),
-        output_shapes=(
-            tf.TensorShape([frame_size[1],frame_size[0],6]), 
-            tf.TensorShape([frame_size[1],frame_size[0],3])
+        generator = AugGenerator
+    
+    parallel = max(parallel, num_vids)
+    indices = np.arange(parallel+1)*(num_vids//parallel)
+    indices[-1] = num_vids
+
+    dummy_ds = tf.data.Dataset.range(parallel)
+    dataset = dummy_ds.interleave(
+        lambda x: tf.data.Dataset.from_generator(
+            lambda x: generator(
+                vid_paths[indices[x]:indices[x+1]],
+                frame_size,
+            ),
+            output_signature=(
+                tf.TensorSpec(shape=[frame_size[1],frame_size[0],6],
+                              dtype=tf.float32),
+                tf.TensorSpec(shape=[frame_size[1],frame_size[0],3],
+                              dtype=tf.float32),
+            ),
+            args=(x,)
         ),
+        cycle_length=parallel,
+        block_length=1,
+        num_parallel_calls=parallel,
     )
+
     if not val_data:
         dataset = dataset.shuffle(450, reshuffle_each_iteration=False)
     dataset = dataset.batch(batch_size, drop_remainder=True)
