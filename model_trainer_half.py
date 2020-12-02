@@ -173,6 +173,7 @@ class AugGenerator():
 
         # frame_size : (width, height) ex) (1280, 720)
         rotate = False
+        move = False
         if height>self.frame_size[0] and \
             width>self.frame_size[1] and \
             random.random()<0.3:
