@@ -333,8 +333,8 @@ def create_train_dataset(
         num_parallel_calls=parallel,
     )
 
-    if not val_data:
-        dataset = dataset.shuffle(400, reshuffle_each_iteration=False)
+    # if not val_data:
+    #     dataset = dataset.shuffle(400, reshuffle_each_iteration=False)
     dataset = dataset.batch(batch_size, drop_remainder=True)
     dataset = dataset.prefetch(autotune)
     dataset = dataset.repeat()
