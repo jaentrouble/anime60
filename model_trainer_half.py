@@ -188,9 +188,9 @@ class AugGenerator():
             # crop_width = random.randint(self.frame_size[0],width)
             crop_height = height
             crop_width = width
+        else:
             # Manually make movement (shift window)
             move = True
-        else:
             crop_width, crop_height = self.frame_size
         crop_min = (random.randint(0, height-crop_height),
                     random.randint(0, width-crop_width))
