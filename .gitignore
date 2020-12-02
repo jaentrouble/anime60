@@ -131,3 +131,4 @@ savedmodels/
 *.exe
 backups/
 interp/
+log_backups/
