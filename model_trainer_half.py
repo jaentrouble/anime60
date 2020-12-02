@@ -295,7 +295,7 @@ def create_train_dataset(
         vid_paths, 
         frame_size, 
         batch_size, 
-        parallel=4,
+        parallel=8,
         val_data=False
     ):
     """
@@ -326,7 +326,7 @@ def create_train_dataset(
                               dtype=tf.float32),
             ),
             args=(x,)
-        ),
+        ).prefetch(100),
         cycle_length=parallel,
         block_length=1,
         num_parallel_calls=parallel,
