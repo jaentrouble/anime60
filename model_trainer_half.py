@@ -295,8 +295,8 @@ def create_train_dataset(
         vid_paths, 
         frame_size, 
         batch_size, 
+        val_data=False,
         parallel=8,
-        val_data=False
     ):
     """
     image_size : tuple
@@ -494,7 +494,7 @@ def run_training(
         tqdm_callback = TqdmCallback()
 
     train_ds = create_train_dataset(train_vid_paths,frame_size,batch_size)
-    val_ds = create_train_dataset(val_vid_paths,frame_size,batch_size,True)
+    val_ds = create_train_dataset(val_vid_paths,frame_size,batch_size,val_data=True)
 
     image_callback = ValFigCallback(val_ds, logdir)
 
