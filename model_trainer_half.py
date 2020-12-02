@@ -218,12 +218,9 @@ class AugGenerator():
                 delta_w_max = int((min(2*DELTA_MAX,width-crop_max[1]))/2)
                 delta_w = random.randint(0,delta_w_max)
             cropped_frames = [
-                f[crop_min[0]:crop_max[0],
-                  crop_min[1]:crop_max[1]],
-                f[crop_min[0]+delta_h:crop_max[0]+delta_h,
-                  crop_min[1]+delta_w:crop_max[1]+delta_w],
-                f[crop_min[0]+(2*delta_h):crop_max[0]+(2*delta_h),
-                  crop_min[1]+(2*delta_w):crop_max[1]+(2*delta_w)],
+                f[crop_min[0]+(d*delta_h):crop_max[0]+(d*delta_h),
+                  crop_min[1]+(d*delta_w):crop_max[1]+(d*delta_w)]\
+                for d,f in enumerate(sampled_frames)
             ]
         else:
             cropped_frames = [f[crop_min[0]:crop_max[0],
