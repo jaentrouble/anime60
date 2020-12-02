@@ -15,6 +15,8 @@ import os
 from pathlib import Path
 import cv2
 
+DELTA_MAX = 20
+
 class AnimeModel(keras.Model):
     def __init__(self, inputs, model_function, interpolate_ratios):
         """Gets 2 frames and returns interpolated frames
@@ -185,6 +187,8 @@ class AugGenerator():
             # crop_width = random.randint(self.frame_size[0],width)
             crop_height = height
             crop_width = width
+            # Manually make movement (shift window)
+            move = True
         else:
             crop_width, crop_height = self.frame_size
         crop_min = (random.randint(0, height-crop_height),
@@ -195,6 +199,31 @@ class AugGenerator():
             cropped_frames = [f[crop_min[0]:crop_max[0],
                                 crop_min[1]:crop_max[1]].swapaxes(0,1)\
                                 for f in sampled_frames]
+        elif move:
+            # direction (-)
+            if crop_min[0] > (height-crop_max[0]):
+                delta_h_max = int((max(-2*DELTA_MAX,-crop_min[0]))/2)
+                delta_h = random.randint(delta_h_max,0)
+            # direction (+)
+            else:
+                delta_h_max = int((min(2*DELTA_MAX,height-crop_max[0]))/2)
+                delta_h = random.randint(0,delta_h_max)
+            # direction (-)
+            if crop_min[1] > (width-crop_max[1]):
+                delta_w_max = int((max(-2*DELTA_MAX,-crop_min[1]))/2)
+                delta_w = random.randint(delta_w_max,0)
+            # direction (+)
+            else:
+                delta_w_max = int((min(2*DELTA_MAX,width-crop_max[1]))/2)
+                delta_w = random.randint(0,delta_w_max)
+            cropped_frames = [
+                f[crop_min[0]:crop_max[0],
+                  crop_min[1]:crop_max[1]],
+                f[crop_min[0]+delta_h:crop_max[0]+delta_h,
+                  crop_min[1]+delta_w:crop_max[1]+delta_w],
+                f[crop_min[0]+(2*delta_h):crop_max[0]+(2*delta_h),
+                  crop_min[1]+(2*delta_w):crop_max[1]+(2*delta_w)],
+            ]
         else:
             cropped_frames = [f[crop_min[0]:crop_max[0],
                                 crop_min[1]:crop_max[1]]\
