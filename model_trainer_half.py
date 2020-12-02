@@ -302,6 +302,7 @@ def create_train_dataset(
     image_size : tuple
         (WIDTH, HEIGHT)
     """
+    autotune = tf.data.experimental.AUTOTUNE
     num_vids = len(vid_paths)
     if val_data:
         generator = ValGenerator
@@ -332,10 +333,10 @@ def create_train_dataset(
         num_parallel_calls=parallel,
     )
 
-    # if not val_data:
-    #     dataset = dataset.shuffle(400, reshuffle_each_iteration=False)
+    if not val_data:
+        dataset = dataset.shuffle(400, reshuffle_each_iteration=False)
     dataset = dataset.batch(batch_size, drop_remainder=True)
-    dataset = dataset.prefetch(100)
+    dataset = dataset.prefetch(autotune)
     dataset = dataset.repeat()
 
     return dataset
