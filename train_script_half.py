@@ -1,5 +1,4 @@
 import os
-os.environ['TF_GPU_THREAD_MODE'] = 'gpu_private'
 
 import numpy as np
 from model_trainer_half import run_training
