@@ -308,7 +308,7 @@ def create_train_dataset(
     else:
         generator = AugGenerator
     
-    parallel = max(parallel, num_vids)
+    parallel = min(parallel, num_vids)
     indices = np.arange(parallel+1)*(num_vids//parallel)
     indices[-1] = num_vids
 
@@ -326,7 +326,7 @@ def create_train_dataset(
                               dtype=tf.float32),
             ),
             args=(x,)
-        ).prefetch(100),
+        ),
         cycle_length=parallel,
         block_length=1,
         num_parallel_calls=parallel,
