@@ -480,7 +480,7 @@ def run_training(
     else:
         tqdm_callback = TqdmCallback()
 
-    train_ds = create_train_dataset(train_vid_paths,frame_size,batch_size, parallel=12)
+    train_ds = create_train_dataset(train_vid_paths,frame_size,batch_size, parallel=6)
     val_ds = create_train_dataset(val_vid_paths,frame_size,batch_size,val_data=True)
 
     image_callback = ValFigCallback(val_ds, logdir)
