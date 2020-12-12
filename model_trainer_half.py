@@ -158,19 +158,8 @@ class AugGenerator():
                 self.reset_cap()
                 return self.__next__()
         
-        # # Flip frame order half a time
-        # if random.random() > 0.5:
-        #     sampled_frames.pop(1)
-        #     sampled_frames.pop(3)
-        # else:
-        #     sampled_frames.pop(2)
-        #     sampled_frames.pop(4)
-        #     sampled_frames.reverse()
-        
         height, width = sampled_frames[0].shape[:2]
         
-        # if possible, cut vertically half a time
-
         # frame_size : (width, height) ex) (1280, 720)
         rotate = False
         move = False
@@ -178,16 +167,14 @@ class AugGenerator():
             width>self.frame_size[1] and \
             random.random()<0.3:
 
-            # crop_height = random.randint(self.frame_size[0],height)
-            # crop_width = random.randint(self.frame_size[1],width)
             crop_height = self.frame_size[0]
             crop_width = self.frame_size[1]
             rotate = True
         elif random.random()<0.5 :
-            # crop_height = random.randint(self.frame_size[1],height)
-            # crop_width = random.randint(self.frame_size[0],width)
-            crop_height = height
-            crop_width = width
+            max_ratio = min(width/self.frame_size[0],height/self.frame_size[1])
+            ratio = 1 + random.random()*(max_ratio-1)
+            crop_height = int(self.frame_size[1]*ratio)
+            crop_width = int(self.frame_size[0]*ratio)
         else:
             # Manually make movement (shift window)
             move = True
