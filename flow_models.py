@@ -63,3 +63,29 @@ def hr_3_2_16(inputs):
     )(x)
     outputs = layers.Activation('linear', dtype='float32')(x[0])
     return outputs
+
+###############################################################################
+# EfficientHRNet returns half the size of input, so need to upscale
+# Use UpSampling2D, not Deconv layer to prevent checkerboard effect
+def upscale_block(inputs, filters):
+    up_layers = keras.Sequential([
+        layers.UpSampling2D(
+            size=2,
+            interpolation='bilinear',
+            dtype=tf.float32,
+        ),
+        clayers.BasicBlock(filters)
+    ], name='upscale_block')
+    return up_layers(inputs)
+
+###############################################################################
+
+def ehrb0_112_12(inputs):
+    half_sized = clayers.EfficientHRNet_B0(
+        filters=[12,22,44,86],
+        blocks =[2,2,4],
+        name='EffHRNetB0'
+    )(inputs)
+    upscaled = upscale_block(half_sized, 12)
+    outputs = layers.Activation('linear', dtype='float32')(upscaled)
+    return outputs

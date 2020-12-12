@@ -3,6 +3,9 @@ from tensorflow import keras
 from tensorflow.keras import layers
 from .hrnet import *
 
+# NOTE: EfficientHRNet reduces its output size into half
+#       I.e. (N, H/2, W/2, C)
+
 class EfficientHRNet(layers.Layer):
     r"""EfficientHRNet
     EfficientHRNet Model template

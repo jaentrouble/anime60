@@ -3,6 +3,7 @@ import tensorflow.keras as keras
 from tensorflow.keras import layers
 from extra_models.hrnet import *
 from extra_models.deep_voxel import *
+from extra_models.eff_hrnet import *
 
 class MaxPoolWithArgmax2D(layers.Layer):
     def __init__(
