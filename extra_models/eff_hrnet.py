@@ -117,8 +117,6 @@ class EfficientHRNet_B0(EfficientHRNet):
             include_top=False,
             weights=None,
             input_shape=input_shape[1:],
-            #TODO: Test dtype
-            dtype=tf.float32,
         )
         self.backbone = keras.Model(
             inputs = effnet.input,

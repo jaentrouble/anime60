@@ -89,3 +89,13 @@ def ehrb0_112_12(inputs):
     upscaled = upscale_block(half_sized, 12)
     outputs = layers.Activation('linear', dtype='float32')(upscaled)
     return outputs
+
+def ehrb0_123_21(inputs):
+    half_sized = clayers.EfficientHRNet_B0(
+        filters=[21,42,83,166],
+        blocks =[2,4,6],
+        name='EffHRNetB0'
+    )(inputs)
+    upscaled = upscale_block(half_sized, 21)
+    outputs = layers.Activation('linear', dtype='float32')(upscaled)
+    return outputs
