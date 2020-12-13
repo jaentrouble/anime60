@@ -68,11 +68,6 @@ class VoxelInterp(layers.Layer):
         # self.conv = layers.Conv2D(3*self.frame_n,1, 
         #                           activation='tanh', dtype='float32')
         self.conv = layers.Conv2D(3, 3, padding='same',dtype='float32')
-        self.relu_tanh_like = layers.ReLU(
-            max_value=1.0,
-            threshold=-1.0,
-            dtype='float32',
-        )
 
         self.step_counter = tf.Variable(0,trainable=False,dtype=tf.int64)
         
@@ -83,8 +78,10 @@ class VoxelInterp(layers.Layer):
         frame1 = inputs[0][...,3:6]
         encoded_image = inputs[1]
 
-        net = self.relu_tanh_like(self.conv(encoded_image))
-
+        net = self.conv(encoded_image)
+        # tanh-like linear activation
+        net = keras.activations.hard_sigmoid(net)*2 -1
+        
         tf.debugging.check_numerics(frame0,'frame0')
         tf.debugging.check_numerics(frame1,'frame1')
         tf.debugging.check_numerics(encoded_image,'encoded')
