@@ -85,6 +85,7 @@ class VoxelInterp(layers.Layer):
         height = tf.shape(frame0)[1]
         width = tf.shape(frame0)[2]
         total_pixels = tf.reduce_prod(tf.shape(frame0))
+        tf.debugging.assert_positive(total_pixels, 'total_pixels positive')
 
         _, hh, ww = tf.meshgrid(
             tf.range(batch_size, dtype=tf.float32),
@@ -97,13 +98,15 @@ class VoxelInterp(layers.Layer):
         flow = net[...,0:2]
         mask = net[...,2:3]
         tf.summary.histogram('flow',flow, step=self.step_counter)
-        flow_reg_loss = self.gamma_flow\
-                *tf.reduce_sum(tf.image.total_variation(flow))\
-                /tf.cast(total_pixels,tf.float32)
+        flow_reg_loss = tf.math.divide_no_nan(
+            self.gamma_flow*tf.reduce_sum(tf.image.total_variation(flow)),
+            tf.cast(total_pixels,tf.float32)
+        )
         self.add_loss(flow_reg_loss)
-        mask_reg_loss = self.gamma_mask\
-                *tf.reduce_sum(tf.image.total_variation(mask))\
-                /tf.cast(total_pixels,tf.float32)
+        mask_reg_loss = tf.math.divide_no_nan(
+            self.gamma_mask*tf.reduce_sum(tf.image.total_variation(mask)),
+            tf.cast(total_pixels,tf.float32)
+        )
         self.add_loss(mask_reg_loss)
         tf.debugging.check_numerics(flow_reg_loss, 'flow_reg_loss')
         tf.debugging.check_numerics(mask_reg_loss, 'mask_reg_loss')
