@@ -82,15 +82,8 @@ class VoxelInterp(layers.Layer):
         frame0 = inputs[0][...,0:3]
         frame1 = inputs[0][...,3:6]
         encoded_image = inputs[1]
-        tf.summary.histogram('encoded_image',encoded_image,
-                             step=self.step_counter)
-        tf.summary.scalar('encoded_max',tf.reduce_max(encoded_image),
-                          step=self.step_counter)
-        
 
         net = self.relu_tanh_like(self.conv(encoded_image))
-        tf.summary.histogram('net',net,
-                             step=self.step_counter)
 
         tf.debugging.check_numerics(frame0,'frame0')
         tf.debugging.check_numerics(frame1,'frame1')
