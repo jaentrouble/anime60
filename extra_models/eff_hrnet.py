@@ -84,10 +84,10 @@ class EfficientHRNet(layers.Layer):
             name='fusion_layer'
         )
         self.deconv_block = keras.Sequential([
-            layers.Conv2DTranspose(
-                filters=self.filters[0],
-                kernel_size=2,
-                strides=2
+            layers.UpSampling2D(
+                size=2,
+                interpolation='bilinear',
+                dtype=tf.float32,
             ),
             BasicBlock(self.filters[0]),
             BasicBlock(self.filters[0]),
