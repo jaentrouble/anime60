@@ -97,14 +97,16 @@ class VoxelInterp(layers.Layer):
         flow = net[...,0:2]
         mask = net[...,2:3]
         tf.summary.histogram('flow',flow, step=self.step_counter)
-        self.add_loss(
-            self.gamma_flow * tf.reduce_sum(tf.image.total_variation(flow))\
+        flow_reg_loss = self.gamma_flow\
+                *tf.reduce_sum(tf.image.total_variation(flow))\
                 /tf.cast(total_pixels,tf.float32)
-        )
-        self.add_loss(
-            self.gamma_mask * tf.reduce_sum(tf.image.total_variation(mask))\
+        self.add_loss(flow_reg_loss)
+        mask_reg_loss = self.gamma_mask\
+                *tf.reduce_sum(tf.image.total_variation(mask))\
                 /tf.cast(total_pixels,tf.float32)
-        )
+        self.add_loss(mask_reg_loss)
+        tf.debugging.check_numerics(flow_reg_loss, 'flow_reg_loss')
+        tf.debugging.check_numerics(mask_reg_loss, 'mask_reg_loss')
 
 
         for i in range(self.frame_n):
@@ -128,9 +130,18 @@ class VoxelInterp(layers.Layer):
 
             output_0 = self.bilinear_interp(frame0, coor_h_0, coor_w_0)
             output_1 = self.bilinear_interp(frame1, coor_h_1, coor_w_1)
+            tf.debugging.check_numerics(
+                output_0, f'frame{i}_output0'
+            )
+            tf.debugging.check_numerics(
+                output_1, f'frame{i}_output1'
+            )
 
             mask = (1-alpha) * (1+mask) # Normalize to (0.0, 1.0)
             output = mask*output_0 + (1-mask)*output_1
+            tf.debugging.check_numerics(
+                output, f'frame{i}_output'
+            )
             output_frames.append(output)
 
         stacked = tf.concat(output_frames, axis=-1)
