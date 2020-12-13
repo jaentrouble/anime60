@@ -80,6 +80,8 @@ class VoxelInterp(layers.Layer):
         encoded_image = inputs[1]
         tf.summary.histogram('encoded_image',encoded_image,
                              step=self.step_counter)
+        tf.summary.scalar('encoded_max',tf.reduce_max(encoded_image),
+                          step=self.step_counter)
         
 
         net = self.conv(encoded_image)
@@ -90,7 +92,7 @@ class VoxelInterp(layers.Layer):
         tf.debugging.check_numerics(frame1,'frame1')
         tf.debugging.check_numerics(encoded_image,'encoded')
         tf.debugging.check_numerics(net, 'net')
-        
+
         batch_size = tf.shape(frame0)[0]
         height = tf.shape(frame0)[1]
         width = tf.shape(frame0)[2]
