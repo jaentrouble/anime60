@@ -67,8 +67,12 @@ class VoxelInterp(layers.Layer):
         
         # self.conv = layers.Conv2D(3*self.frame_n,1, 
         #                           activation='tanh', dtype='float32')
-        self.conv = layers.Conv2D(3, 3, padding='same',
-                                  activation='tanh', dtype='float32')
+        self.conv = layers.Conv2D(3, 3, padding='same')
+        self.relu_tanh_like = layers.ReLU(
+            max_value=1.0,
+            threshold=-1.0,
+            dtype='float32',
+        )
 
         self.step_counter = tf.Variable(0,trainable=False,dtype=tf.int64)
         
@@ -84,7 +88,7 @@ class VoxelInterp(layers.Layer):
                           step=self.step_counter)
         
 
-        net = self.conv(encoded_image)
+        net = self.relu_tanh_like(self.conv(encoded_image))
         tf.summary.histogram('net',net,
                              step=self.step_counter)
 
