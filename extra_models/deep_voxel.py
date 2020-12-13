@@ -77,16 +77,16 @@ class VoxelInterp(layers.Layer):
         frame0 = inputs[0][...,0:3]
         frame1 = inputs[0][...,3:6]
         encoded_image = inputs[1]
+        encoded_image = tf.where(
+            tf.math.is_finite(encoded_image),
+            encoded_image,
+            0,
+        )
 
         net = self.conv(encoded_image)
         # tanh-like linear activation
         net = keras.activations.hard_sigmoid(net)*2 -1
         
-        tf.debugging.check_numerics(frame0,'frame0')
-        tf.debugging.check_numerics(frame1,'frame1')
-        tf.debugging.check_numerics(encoded_image,'encoded')
-        tf.debugging.check_numerics(net, 'net')
-
         batch_size = tf.shape(frame0)[0]
         height = tf.shape(frame0)[1]
         width = tf.shape(frame0)[2]
@@ -113,9 +113,6 @@ class VoxelInterp(layers.Layer):
             tf.cast(total_pixels,tf.float32)
         )
         self.add_loss(mask_reg_loss)
-        tf.debugging.check_numerics(flow_reg_loss, 'flow_reg_loss')
-        tf.debugging.check_numerics(mask_reg_loss, 'mask_reg_loss')
-
 
         for i in range(self.frame_n):
             # flow = net[...,i*3:i*3+2]
@@ -138,18 +135,9 @@ class VoxelInterp(layers.Layer):
 
             output_0 = self.bilinear_interp(frame0, coor_h_0, coor_w_0)
             output_1 = self.bilinear_interp(frame1, coor_h_1, coor_w_1)
-            tf.debugging.check_numerics(
-                output_0, f'frame{i}_output0'
-            )
-            tf.debugging.check_numerics(
-                output_1, f'frame{i}_output1'
-            )
 
             mask = (1-alpha) * (1+mask) # Normalize to (0.0, 1.0)
             output = mask*output_0 + (1-mask)*output_1
-            tf.debugging.check_numerics(
-                output, f'frame{i}_output'
-            )
             output_frames.append(output)
 
         stacked = tf.concat(output_frames, axis=-1)
