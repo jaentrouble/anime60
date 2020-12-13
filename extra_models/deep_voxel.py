@@ -67,7 +67,7 @@ class VoxelInterp(layers.Layer):
         
         # self.conv = layers.Conv2D(3*self.frame_n,1, 
         #                           activation='tanh', dtype='float32')
-        self.conv = layers.Conv2D(3, 3, padding='same')
+        self.conv = layers.Conv2D(3, 3, padding='same',dtype='float32')
         self.relu_tanh_like = layers.ReLU(
             max_value=1.0,
             threshold=-1.0,
