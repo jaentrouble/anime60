@@ -23,8 +23,6 @@ frame_size = (320,320)
 
 val_ds = create_train_dataset(vid_paths, frame_size, 24, val_data=True, parallel=6)
 
-model_f = 
-
 inputs= keras.Input((frame_size[1],frame_size[0],6))
 dummy_model = AnimeModel(inputs,model_f,[0.5])
 loss = keras.losses.MeanAbsoluteError()
