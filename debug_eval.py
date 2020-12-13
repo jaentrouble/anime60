@@ -17,7 +17,7 @@ vid_dir = Path('data/cut')
 vid_paths = [str(vid_dir/vn) for vn in os.listdir(vid_dir)]
 random.shuffle(vid_paths)
 
-model_f = fm.ehrb0_143_32
+model_f = fm.ehrb0_143_32 
 
 frame_size = (320,320)
 
