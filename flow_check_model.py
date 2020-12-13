@@ -124,7 +124,8 @@ class Flow_VoxelInterp(layers.Layer):
                              'Frame0 & Frame1 concat, Encoded_image\n'
                              f'But got {len(input_shape)} inputs')
         
-        self.conv = layers.Conv2D(3, 3, padding='same',dtype='float32')
+        self.conv = layers.Conv2D(3, 3, padding='same',
+                                  activation='tanh',dtype='float32')
 
         self.step_counter = tf.Variable(0,trainable=False,dtype=tf.int64)
         
@@ -136,8 +137,6 @@ class Flow_VoxelInterp(layers.Layer):
         encoded_image = inputs[1]
 
         net = self.conv(encoded_image)
-        # tanh-like linear activation
-        net = keras.activations.hard_sigmoid(net)*2 -1
 
         batch_size = tf.shape(frame0)[0]
         height = tf.shape(frame0)[1]
