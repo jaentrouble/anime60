@@ -78,9 +78,12 @@ class VoxelInterp(layers.Layer):
         frame0 = inputs[0][...,0:3]
         frame1 = inputs[0][...,3:6]
         encoded_image = inputs[1]
+        tf.summary.histogram('encoded_image',encoded_image,
+                             step=self.step_counter)
         tf.debugging.check_numerics(frame0,'frame0')
         tf.debugging.check_numerics(frame1,'frame1')
         tf.debugging.check_numerics(encoded_image,'encoded')
+        
 
         net = self.conv(encoded_image)
         tf.debugging.check_numerics(net, 'net')
@@ -89,7 +92,6 @@ class VoxelInterp(layers.Layer):
         height = tf.shape(frame0)[1]
         width = tf.shape(frame0)[2]
         total_pixels = tf.reduce_prod(tf.shape(frame0))
-        tf.debugging.assert_positive(total_pixels, 'total_pixels positive')
 
         _, hh, ww = tf.meshgrid(
             tf.range(batch_size, dtype=tf.float32),
