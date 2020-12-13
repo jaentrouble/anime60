@@ -81,7 +81,7 @@ class VoxelInterp(layers.Layer):
         encoded_image = tf.where(
             tf.math.is_finite(encoded_image),
             encoded_image,
-            0,
+            0.0,
         )
 
         net = self.conv(encoded_image)
