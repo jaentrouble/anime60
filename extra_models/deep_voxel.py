@@ -78,8 +78,12 @@ class VoxelInterp(layers.Layer):
         frame0 = inputs[0][...,0:3]
         frame1 = inputs[0][...,3:6]
         encoded_image = inputs[1]
+        tf.debugging.check_numerics(frame0,'frame0')
+        tf.debugging.check_numerics(frame1,'frame1')
+        tf.debugging.check_numerics(encoded_image,'encoded')
 
         net = self.conv(encoded_image)
+        tf.debugging.check_numerics(net, 'net')
 
         batch_size = tf.shape(frame0)[0]
         height = tf.shape(frame0)[1]
