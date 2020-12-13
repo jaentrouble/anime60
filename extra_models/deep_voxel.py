@@ -87,6 +87,8 @@ class VoxelInterp(layers.Layer):
 
         net = self.conv(encoded_image)
         tf.debugging.check_numerics(net, 'net')
+        tf.summary.histogram('net',net,
+                             step=self.step_counter)
 
         batch_size = tf.shape(frame0)[0]
         height = tf.shape(frame0)[1]
