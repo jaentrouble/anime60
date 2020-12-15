@@ -1,6 +1,6 @@
 import tensorflow as tf
 from flow_models import *
-from model_trainer import AnimeModel
+from model_trainer_half import AnimeModel
 from tensorflow.keras import mixed_precision
 import numpy as np
 from pathlib import Path
@@ -81,7 +81,7 @@ for vid_name in vid_names:
         concated1 = np.concatenate([frame0,frame1],axis=-1).astype(np.float32)/ 255.0
         concated2 = np.concatenate([frame2,frame1],axis=-1).astype(np.float32)/ 255.0
         patches = frame_to_patch_on_batch(np.array([concated1,concated2]),patch_size,overlap)
-        outputs = anime_model(patches)
+        outputs = anime_model.predict_on_batch(patches)
         outputs = np.round(np.clip(outputs, 0, 1) * 255).astype(np.uint8)
         interped = patch_to_frame_on_batch(outputs,frame_size,overlap)
         interped1, interped2 = interped[0][...,0:3], interped[0][...,3:6]
