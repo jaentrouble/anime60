@@ -8,6 +8,7 @@ import cv2
 from tqdm import tqdm
 import argparse
 import os
+from tools.stitch import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-w','--weight', dest='weight')
@@ -25,12 +26,13 @@ if gpus:
 policy = mixed_precision.Policy('mixed_float16')
 mixed_precision.set_global_policy(policy)
 
-frame_size = (960,540)
+patch_size = (320,320)
+overlap = 60
 interp_ratio = [0.4,0.8]
-model_f = hr_3_2_16
+model_f = ehrb0_143_32
 weight_dir = args.weight
 
-inputs = tf.keras.Input((frame_size[1],frame_size[0],6))
+inputs = tf.keras.Input((patch_size[1],patch_size[0],6))
 anime_model = AnimeModel(inputs, model_f, interp_ratio)
 anime_model.compile(
     optimizer='adam',
@@ -45,13 +47,15 @@ for vid_name in vid_names:
     print(f'{vid_name} start')
     cap = cv2.VideoCapture(str(vid_dir/vid_name))
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    ret, frame = cap.read()
+    frame_size = (frame.shape[1],frame.shape[0])
     writer = cv2.VideoWriter(
         str(interp_dir/f'{os.path.splitext(vid_name)[0]}_interp.mp4'),
         fourcc,
         60,
         frame_size
     )
-    ret, frame = cap.read()
+
     t = tqdm(unit='frames')
     while cap.isOpened():
         if ret:
@@ -73,16 +77,16 @@ for vid_name in vid_names:
             frame2 = frame
         else:
             break
-        frame0_resized = cv2.resize(frame0, dsize=frame_size)
-        frame1_resized = cv2.resize(frame1, dsize=frame_size)
-        frame2_resized = cv2.resize(frame2, dsize=frame_size)
-        concated1 = np.concatenate([frame0_resized,frame1_resized],axis=-1).astype(np.float32)/ 255.0
-        concated2 = np.concatenate([frame2_resized,frame1_resized],axis=-1).astype(np.float32)/ 255.0
-        outputs = anime_model(np.array([concated1,concated2]))
+
+        concated1 = np.concatenate([frame0,frame1],axis=-1).astype(np.float32)/ 255.0
+        concated2 = np.concatenate([frame2,frame1],axis=-1).astype(np.float32)/ 255.0
+        patches = frame_to_patch_on_batch(np.array([concated1,concated2]),patch_size,overlap)
+        outputs = anime_model(patches)
         outputs = np.round(np.clip(outputs, 0, 1) * 255).astype(np.uint8)
-        interped1, interped2 = outputs[0][...,0:3], outputs[0][...,3:6]
-        interped3, interped4 = outputs[1][...,3:6], outputs[1][...,0:3]
-        writer.write(frame0_resized)
+        interped = patch_to_frame_on_batch(outputs,frame_size,overlap)
+        interped1, interped2 = interped[0][...,0:3], interped[0][...,3:6]
+        interped3, interped4 = interped[1][...,3:6], interped[1][...,0:3]
+        writer.write(frame0)
         writer.write(interped1)
         writer.write(interped2)
         writer.write(interped3)
