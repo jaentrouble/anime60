@@ -23,7 +23,7 @@ def frame_to_patch(frame, patch_size, overlap):
         extra_pad_h = 0
 
     patch_num_w = (frame_w) // (patch_w-2*overlap)
-    if (frame_w)%(patch_w-overlap) > 0:
+    if (frame_w)%(patch_w-2*overlap) > 0:
         patch_num_w += 1
         extra_pad_w = (patch_w-2*overlap)-(frame_w)%(patch_w-2*overlap)
     else:
@@ -73,7 +73,7 @@ def frame_to_patch_on_batch(frame, patch_size, overlap):
         extra_pad_h = 0
 
     patch_num_w = (frame_w) // (patch_w-2*overlap)
-    if (frame_w)%(patch_w-overlap) > 0:
+    if (frame_w)%(patch_w-2*overlap) > 0:
         patch_num_w += 1
         extra_pad_w = (patch_w-2*overlap)-(frame_w)%(patch_w-2*overlap)
     else:
@@ -128,13 +128,15 @@ def patch_to_frame(patches, frame_size, overlap):
         reshape_h = patch_num_h+1
     else:
         left_over_h = 0
+        reshape_h = patch_num_h
 
     patch_num_w = (frame_w) // (patch_w-2*overlap)
-    if (frame_w)%(patch_w-overlap) > 0:
+    if (frame_w)%(patch_w-2*overlap) > 0:
         left_over_w = (frame_w)%(patch_w-2*overlap)
         reshape_w = patch_num_w + 1
     else:
         left_over_w = 0
+        reshape_w = patch_num_w
     
     assert reshape_h * reshape_w == patch_num,\
             'Patch_number does not match. Check frame_size and/or overlap'
@@ -197,7 +199,7 @@ def patch_to_frame_on_batch(patches, frame_size, overlap):
         left_over_h = 0
 
     patch_num_w = (frame_w) // (patch_w-2*overlap)
-    if (frame_w)%(patch_w-overlap) > 0:
+    if (frame_w)%(patch_w-2*overlap) > 0:
         left_over_w = (frame_w)%(patch_w-2*overlap)
         reshape_w = patch_num_w + 1
     else:

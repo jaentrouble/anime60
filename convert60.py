@@ -87,7 +87,7 @@ for vid_name in vid_names:
         patches = frame_to_patch_on_batch(np.array([concated1,concated2]),patch_size,overlap)
         outputs = []
         for i in range(7):
-            outputs.append(anime_model(patches[i*8:(i+1)*8]))
+            outputs.append(anime_model(patches[i*8:(i+1)*8],training=False))
         outputs = np.concatenate(outputs,axis=0)
         outputs = np.round(np.clip(outputs, 0, 1) * 255).astype(np.uint8)
         interped = patch_to_frame_on_batch(outputs,frame_size_hw,overlap)
