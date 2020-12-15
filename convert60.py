@@ -49,15 +49,19 @@ for vid_name in vid_names:
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     ret, frame = cap.read()
     frame_size = (frame.shape[1],frame.shape[0])
+    frame_size_hw = (frame_size[1],frame_size[0])
     writer = cv2.VideoWriter(
         str(interp_dir/f'{os.path.splitext(vid_name)[0]}_interp.mp4'),
         fourcc,
         60,
         frame_size
     )
-
-    t = tqdm(unit='frames')
+    f = 0
+    t = tqdm(unit='frames',total=1200*5)
     while cap.isOpened():
+        f += 1
+        if f > 1200:
+            break
         if ret:
             frame0 = frame
         else:
@@ -81,9 +85,12 @@ for vid_name in vid_names:
         concated1 = np.concatenate([frame0,frame1],axis=-1).astype(np.float32)/ 255.0
         concated2 = np.concatenate([frame2,frame1],axis=-1).astype(np.float32)/ 255.0
         patches = frame_to_patch_on_batch(np.array([concated1,concated2]),patch_size,overlap)
-        outputs = anime_model.predict_on_batch(patches)
+        outputs = []
+        for i in range(7):
+            outputs.append(anime_model(patches[i*8:(i+1)*8]))
+        outputs = np.concatenate(outputs,axis=0)
         outputs = np.round(np.clip(outputs, 0, 1) * 255).astype(np.uint8)
-        interped = patch_to_frame_on_batch(outputs,frame_size,overlap)
+        interped = patch_to_frame_on_batch(outputs,frame_size_hw,overlap)
         interped1, interped2 = interped[0][...,0:3], interped[0][...,3:6]
         interped3, interped4 = interped[1][...,3:6], interped[1][...,0:3]
         writer.write(frame0)
