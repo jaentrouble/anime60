@@ -35,7 +35,8 @@ def frame_to_patch(frame, patch_size, overlap):
         constant_values=0
     )
 
-    patches = np.zeros((patch_num_h,patch_num_w,patch_h,patch_w,frame_c))
+    patches = np.zeros((patch_num_h,patch_num_w,patch_h,patch_w,frame_c),
+                        dtype=frame.dtype)
     for i in range(patch_num_h):
         for j in range(patch_num_w):
             patches[i,j] = padded[
@@ -90,7 +91,8 @@ def frame_to_patch_on_batch(frame, patch_size, overlap):
         constant_values=0
     )
 
-    patches = np.zeros((N,patch_num_h,patch_num_w,patch_h,patch_w,frame_c))
+    patches = np.zeros((N,patch_num_h,patch_num_w,patch_h,patch_w,frame_c),
+                        dtype=frame.dtype)
     for i in range(patch_num_h):
         for j in range(patch_num_w):
             patches[:,i,j] = padded[
@@ -145,7 +147,7 @@ def patch_to_frame(patches, frame_size, overlap):
         (reshape_h, reshape_w, patch_h, patch_w, patch_c)
     )
 
-    frame = np.zeros((frame_h, frame_w, patch_c))
+    frame = np.zeros((frame_h, frame_w, patch_c),dtype=patches.dtype)
     for i in range(patch_num_h):
         for j in range(patch_num_w):
             frame[
@@ -197,6 +199,7 @@ def patch_to_frame_on_batch(patches, frame_size, overlap):
         reshape_h = patch_num_h+1
     else:
         left_over_h = 0
+        reshape_h = patch_num_h
 
     patch_num_w = (frame_w) // (patch_w-2*overlap)
     if (frame_w)%(patch_w-2*overlap) > 0:
@@ -204,6 +207,7 @@ def patch_to_frame_on_batch(patches, frame_size, overlap):
         reshape_w = patch_num_w + 1
     else:
         left_over_w = 0
+        reshape_w = patch_num_w
     
     assert total_patch_num % (reshape_h * reshape_w)==0,\
             'Patch_number does not match. Check frame_size and/or overlap'
@@ -213,7 +217,7 @@ def patch_to_frame_on_batch(patches, frame_size, overlap):
         (N, reshape_h, reshape_w, patch_h, patch_w, patch_c)
     )
 
-    frames = np.zeros((N, frame_h, frame_w, patch_c))
+    frames = np.zeros((N, frame_h, frame_w, patch_c),dtype=patches.dtype)
     for i in range(patch_num_h):
         for j in range(patch_num_w):
             frames[

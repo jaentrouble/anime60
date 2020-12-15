@@ -89,8 +89,8 @@ for vid_name in vid_names:
         for i in range(7):
             outputs.append(anime_model(patches[i*8:(i+1)*8],training=False))
         outputs = np.concatenate(outputs,axis=0)
-        outputs = np.round(np.clip(outputs, 0, 1) * 255).astype(np.uint8)
         interped = patch_to_frame_on_batch(outputs,frame_size_hw,overlap)
+        interped = np.round(np.clip(interped, 0, 1) * 255).astype(np.uint8)
         interped1, interped2 = interped[0][...,0:3], interped[0][...,3:6]
         interped3, interped4 = interped[1][...,3:6], interped[1][...,0:3]
         writer.write(frame0)

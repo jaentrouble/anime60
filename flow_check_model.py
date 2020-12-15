@@ -152,6 +152,7 @@ class Flow_VoxelInterp(layers.Layer):
 
         output_frames = []
         flow = net[...,0:2]
+        mask = net[...,2:3]
         tf.summary.histogram('flow',flow, step=self.step_counter)
         self.add_loss(
             self.gamma_flow * tf.reduce_sum(tf.image.total_variation(flow))\
@@ -162,7 +163,7 @@ class Flow_VoxelInterp(layers.Layer):
 
         for i in range(self.frame_n):
             # flow = net[...,i*3:i*3+2]
-            mask = net[...,i+2:i+3]
+            
 
             # tf.summary.histogram(f'flow_{i}',flow, step=self.step_counter)
             tf.summary.histogram(f'mask_{i}',mask, step=self.step_counter)
@@ -187,8 +188,8 @@ class Flow_VoxelInterp(layers.Layer):
             output_0 = self.bilinear_interp(frame0, coor_h_0, coor_w_0)
             output_1 = self.bilinear_interp(frame1, coor_h_1, coor_w_1)
 
-            mask = 0.5 * (1+mask) # Normalize to (0.0, 1.0)
-            output = mask*output_0 + (1-mask)*output_1
+            norm_mask = (1-alpha) * (1+mask) # Normalize to (0.0, 1.0)
+            output = norm_mask*output_0 + (1-norm_mask)*output_1
             output_frames.append(output)
 
         stacked = tf.concat(output_frames, axis=-1)
