@@ -55,7 +55,7 @@ class AnimeModel(keras.Model):
         
         inputs = keras.Input((flow_map_size[0],flow_map_size[1],6))
         encoded = model_function(inputs)
-        self.encoder= keras.Model(inputs=inputs, outputs=encoded)
+        self.encoder= keras.Model(inputs=inputs, outputs=encoded, name='encoder')
         self.encoder.summary()
         self.interpolator = VoxelInterp(interpolate_ratios, dtype=tf.float32)
         
