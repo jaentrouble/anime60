@@ -53,13 +53,16 @@ class AnimeModel(keras.Model):
         self.interpolate_ratios = interpolate_ratios
         self.flow_map_size = flow_map_size
         
+        inputs = keras.Input((flow_map_size[1],flow_map_size[1],6))
+        encoded = model_function(inputs)
+        self.encoder= keras.Model(inputs=inputs, outputs=encoded)
         self.interpolator = VoxelInterp(interpolate_ratios, dtype=tf.float32)
         
     def call(self, inputs, training=None):
         inputs = tf.cast(inputs, tf.float32)
         resized_inputs = tf.image.resize(inputs, self.flow_map_size, 
                                          name='downscale')
-        encoded = self.model_function(resized_inputs)
+        encoded = self.encoder(resized_inputs)
         interpolated = self.interpolator([inputs, encoded], training=training)
         return interpolated
     
