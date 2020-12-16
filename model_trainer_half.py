@@ -455,7 +455,7 @@ def run_training(
     
     st = time.time()
 
-    mymodel = get_model(frame_size, model_f, interpolate_ratios, flow_map_size)
+    mymodel = AnimeModel(model_f, interpolate_ratios, flow_map_size)
 
     if load_model_path:
         mymodel.load_weights(load_model_path)
