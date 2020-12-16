@@ -89,6 +89,17 @@ def lr_step7_2(epoch, lr):
             lr = 1e-5/((epoch-40)/5)
     return lr
 
+def lr_step7_3(epoch, lr):
+    if epoch <= 40:
+        lr = 5e-5
+    elif epoch <= 80 :
+        lr = 2e-5
+    else :
+        if epoch % 30 == 0 :
+            lr = 1e-5/((epoch-80)/30)
+    return lr
+
+
 def lr_step8(epoch, lr):
     if epoch <= 20:
         lr = 5e-7
