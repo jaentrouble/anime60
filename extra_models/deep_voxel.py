@@ -25,6 +25,8 @@ class VoxelInterp(layers.Layer):
     Inputs : list of Tensors
         [Frame0 & Frame1 concat, Encoded_image]
         Frames should be concatenated i.e. (N,H,W,2*C)
+        Encoded_image's shape does not need to be the same as frames.
+        It will be resized to frames' size
 
     Output
     ------
@@ -65,8 +67,6 @@ class VoxelInterp(layers.Layer):
                              'Frame0 & Frame1 concat, Encoded_image\n'
                              f'But got {len(input_shape)} inputs')
         
-        # self.conv = layers.Conv2D(3*self.frame_n,1, 
-        #                           activation='tanh', dtype='float32')
         self.conv = layers.Conv2D(3, 3, padding='same',
                                   activation='tanh',dtype='float32')
 
@@ -90,6 +90,8 @@ class VoxelInterp(layers.Layer):
         height = tf.shape(frame0)[1]
         width = tf.shape(frame0)[2]
         total_pixels = tf.reduce_prod(tf.shape(frame0))
+
+        net = tf.image.resize(net, (height,width), name='upscale')
 
         _, hh, ww = tf.meshgrid(
             tf.range(batch_size, dtype=tf.float32),

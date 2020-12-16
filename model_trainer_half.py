@@ -18,7 +18,8 @@ import cv2
 DELTA_MAX = 20
 
 class AnimeModel(keras.Model):
-    def __init__(self, inputs, model_function, interpolate_ratios):
+    def __init__(self, model_function, interpolate_ratios,
+                       flow_map_size,):
         """Gets 2 frames and returns interpolated frames
 
         Args
@@ -34,6 +35,11 @@ class AnimeModel(keras.Model):
             ex) [0.5] would make a single frame of 1/2 position.
             ex) [0.4,0.8] would make two frames at 2/5, 4/5 position.
 
+        flow_map_size: tuple of ints
+            format: (H,W)
+            Will resize any shape of input to flow_map_size
+            Flow map will then be resized again to the original size
+
         Output
         ------
         outputs : (N,H,W,C*F) where F is number of interpolated frames.
@@ -45,15 +51,15 @@ class AnimeModel(keras.Model):
         
         self.model_function = model_function
         self.interpolate_ratios = interpolate_ratios
+        self.flow_map_size = flow_map_size
         
-        encoded = model_function(inputs)
-        self.encoder = keras.Model(inputs=inputs, outputs=encoded)
-        self.encoder.summary()
         self.interpolator = VoxelInterp(interpolate_ratios, dtype=tf.float32)
         
     def call(self, inputs, training=None):
         inputs = tf.cast(inputs, tf.float32)
-        encoded = self.encoder(inputs, training=training)
+        resized_inputs = tf.image.resize(inputs, self.flow_map_size, 
+                                         name='downscale')
+        encoded = self.model_function(resized_inputs)
         interpolated = self.interpolator([inputs, encoded], training=training)
         return interpolated
     
@@ -330,22 +336,24 @@ def create_train_dataset(
     return dataset
 
 
-def get_model(model_f):
+def get_model(frame_size, model_f, interpolate_ratios, flow_map_size):
     """
-    To get model only and load weights.
+    simple wrapper around a model (To use keras.Model functional api)
+    
+    Arguments
+    ---------
+    frame_size : tuple of two ints
+        format (W, H)
+    flow_map_size: tuple of two ints
+        format (W, H)
     """
-    # policy = mixed_precision.Policy('mixed_float16')
-    # mixed_precision.set_policy(policy)
-    inputs = keras.Input((200,200,3))
-    test_model = AdiposeModel(inputs, model_f)
-    test_model.compile(
-        optimizer='adam',
-        loss=keras.losses.BinaryCrossentropy(from_logits=True),
-        metrics=[
-            keras.metrics.BinaryAccuracy(threshold=0.1),
-        ]
-    )
-    return test_model
+    flow_map_size_hw = (flow_map_size[1], flow_map_size[0])
+    inputs = keras.Input((frame_size[1],frame_size[0],6))
+    raw_model = AnimeModel(model_f, interpolate_ratios, flow_map_size_hw)
+    outputs = raw_model(inputs)
+    mymodel = keras.Model(inputs=inputs, outputs=outputs)
+    mymodel.summary()
+    return mymodel
 
 class ValFigCallback(keras.callbacks.Callback):
     def __init__(self, val_ds, logdir):
@@ -427,20 +435,25 @@ def run_training(
         val_vid_paths,
         test_vid_paths,
         frame_size,
+        flow_map_size,
         interpolate_ratios,
         mixed_float = True,
         notebook = True,
         profile = False,
         load_model_path = None,
     ):
+    """
+    frame_size and flow_map_size are both
+        (WIDTH, HEIGHT) format
+    """
     if mixed_float:
         policy = mixed_precision.Policy('mixed_float16')
         mixed_precision.set_global_policy(policy)
     
     st = time.time()
 
-    inputs = keras.Input((frame_size[1],frame_size[0],6))
-    mymodel = AnimeModel(inputs, model_f, interpolate_ratios)
+    mymodel = get_model(frame_size, model_f, interpolate_ratios, flow_map_size)
+
     if load_model_path:
         mymodel.load_weights(load_model_path)
         print(f'Loaded from : {load_model_path}')

@@ -143,6 +143,8 @@ class Flow_VoxelInterp(layers.Layer):
         width = tf.shape(frame0)[2]
         total_pixels = tf.reduce_prod(tf.shape(frame0))
 
+        net = tf.image.resize(net, (height,width))
+
         _, hh, ww = tf.meshgrid(
             tf.range(batch_size, dtype=tf.float32),
             tf.linspace(tf.cast(-1,tf.float32), 1, height),

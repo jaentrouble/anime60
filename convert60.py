@@ -27,7 +27,7 @@ policy = mixed_precision.Policy('mixed_float16')
 mixed_precision.set_global_policy(policy)
 
 patch_size = (320,320)
-overlap = 60
+overlap = 100
 interp_ratio = [0.4,0.8]
 model_f = ehrb0_143_32
 weight_dir = args.weight
@@ -86,7 +86,7 @@ for vid_name in vid_names:
         concated2 = np.concatenate([frame2,frame1],axis=-1).astype(np.float32)/ 255.0
         patches = frame_to_patch_on_batch(np.array([concated1,concated2]),patch_size,overlap)
         outputs = []
-        for i in range(7):
+        for i in range(len(patches)//8 + int(len(patches)%8>0)):
             outputs.append(anime_model(patches[i*8:(i+1)*8],training=False))
         outputs = np.concatenate(outputs,axis=0)
         interped = patch_to_frame_on_batch(outputs,frame_size_hw,overlap)
