@@ -56,6 +56,7 @@ class AnimeModel(keras.Model):
         inputs = keras.Input((flow_map_size[0],flow_map_size[1],6))
         encoded = model_function(inputs)
         self.encoder= keras.Model(inputs=inputs, outputs=encoded)
+        self.encoder.summary()
         self.interpolator = VoxelInterp(interpolate_ratios, dtype=tf.float32)
         
     def call(self, inputs, training=None):
@@ -459,7 +460,9 @@ def run_training(
 
     if load_model_path:
         mymodel.load_weights(load_model_path)
+        print('*'*50)
         print(f'Loaded from : {load_model_path}')
+        print('*'*50)
     loss = keras.losses.MeanAbsoluteError()
     mymodel.compile(
         optimizer='adam',
