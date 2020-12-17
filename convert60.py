@@ -26,14 +26,12 @@ if gpus:
 policy = mixed_precision.Policy('mixed_float16')
 mixed_precision.set_global_policy(policy)
 
-patch_size = (320,320)
-overlap = 100
+flow_map_size = (512,288)
 interp_ratio = [0.4,0.8]
 model_f = ehrb0_143_32
 weight_dir = args.weight
 
-inputs = tf.keras.Input((patch_size[1],patch_size[0],6))
-anime_model = AnimeModel(inputs, model_f, interp_ratio)
+anime_model = AnimeModel(model_f, interp_ratio, flow_map_size)
 anime_model.compile(
     optimizer='adam',
 )
@@ -84,12 +82,7 @@ for vid_name in vid_names:
 
         concated1 = np.concatenate([frame0,frame1],axis=-1).astype(np.float32)/ 255.0
         concated2 = np.concatenate([frame2,frame1],axis=-1).astype(np.float32)/ 255.0
-        patches = frame_to_patch_on_batch(np.array([concated1,concated2]),patch_size,overlap)
-        outputs = []
-        for i in range(len(patches)//8 + int(len(patches)%8>0)):
-            outputs.append(anime_model(patches[i*8:(i+1)*8],training=False))
-        outputs = np.concatenate(outputs,axis=0)
-        interped = patch_to_frame_on_batch(outputs,frame_size_hw,overlap)
+        interped = anime_model(np.array([concated1,concated2]))
         interped = np.round(np.clip(interped, 0, 1) * 255).astype(np.uint8)
         interped1, interped2 = interped[0][...,0:3], interped[0][...,3:6]
         interped3, interped4 = interped[1][...,3:6], interped[1][...,0:3]
