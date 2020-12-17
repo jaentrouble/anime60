@@ -95,7 +95,7 @@ def lr_step7_3(epoch, lr):
     elif epoch <= 80 :
         lr = 2e-5
     else :
-        if epoch % 30 == 0 :
+        if (epoch-80) % 30 == 0 :
             lr = 1e-5/((epoch-80)/30)
     return lr
 
