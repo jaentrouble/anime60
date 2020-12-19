@@ -55,10 +55,10 @@ for vid_name in vid_names:
         frame_size
     )
     f = 0
-    t = tqdm(unit='frames',total=1200*5)
+    t = tqdm(unit='frames',total=3600*5)
     while cap.isOpened():
         f += 1
-        if f > 1200:
+        if f > 3600:
             break
         if ret:
             frame0 = frame
@@ -82,7 +82,7 @@ for vid_name in vid_names:
 
         concated1 = np.concatenate([frame0,frame1],axis=-1).astype(np.float32)/ 255.0
         concated2 = np.concatenate([frame2,frame1],axis=-1).astype(np.float32)/ 255.0
-        interped = anime_model(np.array([concated1,concated2]))
+        interped = anime_model.predict_on_batch(np.array([concated1,concated2]))
         interped = np.round(np.clip(interped, 0, 1) * 255).astype(np.uint8)
         interped1, interped2 = interped[0][...,0:3], interped[0][...,3:6]
         interped3, interped4 = interped[1][...,3:6], interped[1][...,0:3]

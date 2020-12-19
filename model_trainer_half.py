@@ -15,7 +15,7 @@ import os
 from pathlib import Path
 import cv2
 
-DELTA_MAX = 40
+DELTA_MAX = 60
 
 class AnimeModel(keras.Model):
     def __init__(self, model_function, interpolate_ratios,

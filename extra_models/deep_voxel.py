@@ -63,7 +63,7 @@ class VoxelInterp(layers.Layer):
             raise ValueError('A VoxelInterp layer should be called '
                              'on a list of inputs')
         if not len(input_shape) == 2:
-            raise ValueError('A VoxelInterp layer gets three inputs:'
+            raise ValueError('A VoxelInterp layer gets two inputs:'
                              'Frame0 & Frame1 concat, Encoded_image\n'
                              f'But got {len(input_shape)} inputs')
         
@@ -101,8 +101,8 @@ class VoxelInterp(layers.Layer):
         )
 
         output_frames = []
-        flow = net[...,0:2]
-        mask = net[...,2:3]
+        flow = net[...,0:2] * 2 # Range: (-2,2)
+        mask = net[...,2:3] # Range: (-1,1)
         tf.summary.histogram('flow',flow, step=self.step_counter)
         flow_reg_loss = tf.math.divide_no_nan(
             self.gamma_flow*tf.reduce_sum(tf.image.total_variation(flow)),
@@ -116,15 +116,7 @@ class VoxelInterp(layers.Layer):
         self.add_loss(mask_reg_loss)
 
         for i in range(self.frame_n):
-            # flow = net[...,i*3:i*3+2]
-
-            # tf.summary.histogram(f'flow_{i}',flow, step=self.step_counter)
             tf.summary.histogram(f'mask_{i}',mask, step=self.step_counter)
-
-            # self.add_loss(
-            #     self.gamma_flow * tf.reduce_sum(tf.image.total_variation(flow))\
-            #         /tf.cast(total_pixels,tf.float32)
-            # )
 
             alpha = self.interpolate_ratios[i]
 
@@ -153,7 +145,7 @@ class VoxelInterp(layers.Layer):
         (5).
         
         x,y are tensors specfying normalized coorindates [-1,1] to sample from im.
-        (-1,1) means (0,0) coordinate in im. (1,1) means the most bottom right pixel.
+        (-1,-1) means (0,0) coordinate in im. (1,1) means the most bottom right pixel.
 
         Args
         ----
