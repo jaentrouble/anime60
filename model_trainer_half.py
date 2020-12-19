@@ -332,7 +332,7 @@ def create_train_dataset(
     if val_data:
         dataset = dataset.shuffle(50, reshuffle_each_iteration=False)
     else:
-        dataset = dataset.shuffle(2000, reshuffle_each_iteration=False)
+        dataset = dataset.shuffle(1700, reshuffle_each_iteration=False)
     dataset = dataset.batch(batch_size, drop_remainder=True)
     dataset = dataset.prefetch(autotune)
     dataset = dataset.repeat()
