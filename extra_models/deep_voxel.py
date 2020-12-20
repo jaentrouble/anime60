@@ -68,7 +68,8 @@ class VoxelInterp(layers.Layer):
                              f'But got {len(input_shape)} inputs')
         
         self.conv = layers.Conv2D(3, 3, padding='same',
-                                  activation='tanh',dtype='float32')
+                                  activation='tanh',dtype='float32',
+                                  kernel_initializer='zeros')
 
         self.step_counter = tf.Variable(0,trainable=False,dtype=tf.int64)
         
