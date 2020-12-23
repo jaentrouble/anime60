@@ -58,15 +58,17 @@ for vid_name in vid_names:
     f = 0
     # t = tqdm(unit='frames',total=3600*5)
 
+    print('Counting frames...')
     nb_frames = int(subprocess.run(
         [
             'ffprobe', 
             '-v', 
             'fatal', 
+            '-count_frames',
             '-select_streams',
             'v:0',
             '-show_entries', 
-            'stream=nb_frames', 
+            'stream=nb_read_frames', 
             '-of', 
             'default=noprint_wrappers=1:nokey=1', 
             str(vid_dir/vid_name)
@@ -74,6 +76,7 @@ for vid_name in vid_names:
         stdout=subprocess.PIPE, 
         stderr=subprocess.STDOUT).stdout
     )
+    print(f'Total {nb_frames}frames')
     t = tqdm(unit='frames',total=nb_frames)
 
     while cap.isOpened():
