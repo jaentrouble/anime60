@@ -9,6 +9,7 @@ from tqdm import tqdm
 import argparse
 import os
 from tools.stitch import *
+import subprocess
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-w','--weight', dest='weight',required=True)
@@ -56,7 +57,24 @@ for vid_name in vid_names:
     )
     f = 0
     # t = tqdm(unit='frames',total=3600*5)
-    t = tqdm(unit='frames',)
+
+    nb_frames = int(subprocess.run(
+        [
+            'ffprobe', 
+            '-v', 
+            'fatal', 
+            '-select_streams',
+            'v:0',
+            '-show_entries', 
+            'stream=nb_frames', 
+            '-of', 
+            'default=noprint_wrappers=1:nokey=1', 
+            str(vid_dir/vid_name)
+        ], 
+        stdout=subprocess.PIPE, 
+        stderr=subprocess.STDOUT).stdout
+    )
+    t = tqdm(unit='frames',total=nb_frames)
 
     while cap.isOpened():
         # f += 1
