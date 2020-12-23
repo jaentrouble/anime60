@@ -59,7 +59,7 @@ for vid_name in vid_names:
     # t = tqdm(unit='frames',total=3600*5)
 
     print('Counting frames...')
-    nb_frames = int(subprocess.run(
+    nb_original_frames = int(subprocess.run(
         [
             'ffprobe', 
             '-v', 
@@ -76,8 +76,9 @@ for vid_name in vid_names:
         stdout=subprocess.PIPE, 
         stderr=subprocess.STDOUT).stdout
     )
-    print(f'Total {nb_frames}frames')
-    t = tqdm(unit='frames',total=nb_frames)
+    nb_new_frames = (nb_original_frames//2)*5
+    print(f'From {nb_original_frames}frames to {nb_new_frames} frames')
+    t = tqdm(unit='frames',total=nb_new_frames)
 
     while cap.isOpened():
         # f += 1
