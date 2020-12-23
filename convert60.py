@@ -11,8 +11,8 @@ import os
 from tools.stitch import *
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-w','--weight', dest='weight')
-
+parser.add_argument('-w','--weight', dest='weight',required=True)
+parser.add_argument('-n','--name', dest='name',required=True)
 args = parser.parse_args()
 
 
@@ -49,25 +49,24 @@ for vid_name in vid_names:
     frame_size = (frame.shape[1],frame.shape[0])
     frame_size_hw = (frame_size[1],frame_size[0])
     writer = cv2.VideoWriter(
-        str(interp_dir/f'{os.path.splitext(vid_name)[0]}_interp.mp4'),
+        str(interp_dir/f'{os.path.splitext(vid_name)[0]}_interp_{args.name}.mp4'),
         fourcc,
         60,
         frame_size
     )
     f = 0
-    t = tqdm(unit='frames',total=3600*5)
+    # t = tqdm(unit='frames',total=3600*5)
+    t = tqdm(unit='frames',)
+
     while cap.isOpened():
-        f += 1
-        if f > 3600:
-            break
+        # f += 1
+        # if f > 3600:
+        #     break
         if ret:
             frame0 = frame
         else:
             break
-        # ret, _ = cap.read()
-        # if not ret:
-        #     break
-        
+
         ret, frame = cap.read()
         if ret:
             frame1 = frame
