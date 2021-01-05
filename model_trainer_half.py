@@ -488,7 +488,6 @@ def run_training(
         optimizer='adam',
         loss=loss,
     )
-    mymodel.summary()
 
     logdir = 'logs/fit/' + name
     if profile:
