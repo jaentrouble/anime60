@@ -1,7 +1,7 @@
 import os
 import ffmpeg
 from pathlib import Path
-inputdir = Path('D:/Lab/anime60/data/2160/temp')
+inputdir = Path('D:/Lab/anime60/data/720/ani_like')
 outputdir = Path('D:/Lab/anime60/data/1080/ani_like')
 kwargs={
     'vcodec' : 'h264_nvenc',
