@@ -406,20 +406,16 @@ class ValFigCallback(keras.callbacks.Callback):
             predict = self.model(sample_x, training=False).numpy()
 
             ax = fig.add_subplot(8,3,6*i+1)
-            x0 = sample_x[0][...,2::-1]
-            ax.imshow(x0)
+            x0e = sample_x[0][...,3]
+            ax.imshow(x0e,cmap='binary')
 
             ax = fig.add_subplot(8,3,6*i+2)
             p0 = predict[0][...,2::-1]
             ax.imshow(p0)
             
-            # ax = fig.add_subplot(8,4,8*i+3)
-            # p1 = predict[0][...,5:2:-1]
-            # ax.imshow(p1)
-
             ax = fig.add_subplot(8,3,6*i+3)
-            x1 = sample_x[0][...,5:2:-1]
-            ax.imshow(x1)
+            x1e = sample_x[0][...,7]
+            ax.imshow(x1e,cmap='binary')
 
             ax = fig.add_subplot(8,3,6*i+4)
             x0 = sample_x[0][...,2::-1]
@@ -434,7 +430,7 @@ class ValFigCallback(keras.callbacks.Callback):
             # ax.imshow(y1)
 
             ax = fig.add_subplot(8,3,6*i+6)
-            x1 = sample_x[0][...,5:2:-1]
+            x1 = sample_x[0][...,6:3:-1]
             ax.imshow(x1)
         return fig
 
@@ -541,7 +537,7 @@ def run_training(
         ],
         verbose=0,
         validation_data=val_ds,
-        validation_steps=10,
+        validation_steps=100,
     )
 
     delta = time.time()-st
