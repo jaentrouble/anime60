@@ -33,7 +33,7 @@ def anime_model(
         ex) [0.4,0.8] would make two frames at 2/5, 4/5 position.
 
     flow_map_size: tuple of ints
-        format: (H,W)
+        format: (Width, Height)
         Will resize any shape of input to flow_map_size
         Flow map will then be resized again to the original size
 
@@ -51,11 +51,12 @@ def anime_model(
         Concatenated as R0,B0,G0, R1,B1,G1 ...
         Returns [0,1] range normalized frames
     """
+    flow_map_size_hw = (flow_map_size[1],flow_map_size[0])
     inputs = keras.Input((None,None,4))
     inputs_float = tf.cast(inputs, tf.float32, name='input_cast')
     resized_inputs = tf.image.resize(
         inputs_float,
-        flow_map_size,
+        flow_map_size_hw,
         name='input_resize'
     )
 
