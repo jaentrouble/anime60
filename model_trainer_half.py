@@ -62,8 +62,8 @@ def anime_model(
 
     no_edge = tf.concat(
         [
-            inputs[0:3],
-            inputs[4:7]
+            inputs[...,0:3],
+            inputs[...,4:7]
         ],
         axis=-1,
         name='input_concat'
@@ -551,7 +551,7 @@ def run_training(
 
 
 if __name__ == '__main__':
-    from flow_models import *
+    from flow_models_functional import *
     gpus = tf.config.experimental.list_physical_devices('GPU')
     if gpus:
         try:
@@ -561,24 +561,15 @@ if __name__ == '__main__':
             print(e)
 
     policy = mixed_precision.Policy('mixed_float16')
-    mixed_precision.set_policy(policy)
+    mixed_precision.set_global_policy(policy)
 
-    inputs = keras.Input((1280,720,6))
-
-    lr_f = lambda x : 1.0
-    lr_callback = keras.callbacks.LearningRateScheduler(lr_f, verbose=1)
-
-    logdir = 'logs/fit/test'
-    tensorboard_callback = tf.keras.callbacks.TensorBoard(
-        log_dir=logdir,
-        histogram_freq=1,
-        profile_batch=0,
-        update_freq='epoch'
+    test_model = anime_model(
+        ehrb0_143_32,
+        [0.5],
+        (512,288),
     )
-
-    model = AnimeModel(inputs, hr_5_3_0, [0.4, 0.8])
-    model.compile(optimizer='adam',loss='mse')
-    sample_x = np.random.random((10,1280,720,6))
-    sample_y = np.random.random((10,1280,720,6))
-    model.fit(x=sample_x, y=sample_y,batch_size=1 ,epochs=10,
-    callbacks=[lr_callback,tensorboard_callback])
+    test_model.compile(
+        run_eagerly=True
+    )
+    import numpy as np
+    test_model(np.random.random((7,540,960,8)))
