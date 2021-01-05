@@ -517,7 +517,7 @@ def run_training(
         tqdm_callback = TqdmCallback()
 
     train_ds = create_train_dataset(vid_dir,edge_dir, train_vid_names,
-                                    frame_size,batch_size, parallel=16)
+                                    frame_size,batch_size, parallel=8)
     val_ds = create_train_dataset(vid_dir,edge_dir,val_vid_names,
                                   frame_size,batch_size,
                                   val_data=True, parallel=4)
