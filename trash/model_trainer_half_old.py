@@ -76,6 +76,60 @@ def anime_model(
                                 name='anime_model')
     return anime_model
 
+class AnimeModel(keras.Model):
+    def __init__(self, model_function, interpolate_ratios,
+                       flow_map_size,):
+        """Gets 2 frames and returns interpolated frames
+
+        Args
+        ----
+        inputs : keras.Input
+            Expects [0,1] range normalized frames
+            shape : (N,H,W,2*C) where two frames are concatenated
+
+        model_function : function that takes keras.Input and returns
+        encoded image
+
+        interpolate_ratios: list
+            ex) [0.5] would make a single frame of 1/2 position.
+            ex) [0.4,0.8] would make two frames at 2/5, 4/5 position.
+
+        flow_map_size: tuple of ints
+            format: (H,W)
+            Will resize any shape of input to flow_map_size
+            Flow map will then be resized again to the original size
+
+        Output
+        ------
+        outputs : (N,H,W,C*F) where F is number of interpolated frames.
+            Concatenated as R0,B0,G0, R1,B1,G1 ...
+            Returns [0,1] range normalized frames
+
+        """
+        super().__init__()
+        
+        self.model_function = model_function
+        self.interpolate_ratios = interpolate_ratios
+        self.flow_map_size = flow_map_size
+        
+        inputs = keras.Input((flow_map_size[0],flow_map_size[1],6))
+        encoded = model_function(inputs)
+        self.encoder= keras.Model(inputs=inputs, outputs=encoded, name='encoder')
+        self.encoder.summary()
+        self.interpolator = VoxelInterp(interpolate_ratios, dtype=tf.float32)
+        
+    def call(self, inputs, training=None):
+        inputs = tf.cast(inputs, tf.float32)
+        resized_inputs = tf.image.resize(inputs, self.flow_map_size, 
+                                         name='downscale')
+        encoded = self.encoder(resized_inputs)
+        interpolated = self.interpolator([inputs, encoded], training=training)
+        return interpolated
+    
+    def get_config(self):
+        config = super().get_config()
+        config['model_function'] = self.model_function
+        config['interpolate_ratios'] = self.interpolate_ratios
 
 class AugGenerator():
     """An iterable generator that makes data
@@ -345,6 +399,25 @@ def create_train_dataset(
     return dataset
 
 
+def get_model(frame_size, model_f, interpolate_ratios, flow_map_size):
+    """
+    simple wrapper around a model (To use keras.Model functional api)
+    
+    Arguments
+    ---------
+    frame_size : tuple of two ints
+        format (W, H)
+    flow_map_size: tuple of two ints
+        format (W, H)
+    """
+    flow_map_size_hw = (flow_map_size[1], flow_map_size[0])
+    inputs = keras.Input((frame_size[1],frame_size[0],6))
+    raw_model = AnimeModel(model_f, interpolate_ratios, flow_map_size_hw)
+    outputs = raw_model(inputs)
+    mymodel = keras.Model(inputs=inputs, outputs=outputs)
+    mymodel.summary()
+    return mymodel
+
 class ValFigCallback(keras.callbacks.Callback):
     def __init__(self, val_ds, logdir):
         super().__init__()
@@ -442,11 +515,7 @@ def run_training(
     
     st = time.time()
 
-    mymodel = anime_model(
-        model_f,
-        interpolate_ratios,
-        flow_map_size
-    )
+    mymodel = AnimeModel(model_f, interpolate_ratios, flow_map_size)
 
     if load_model_path:
         mymodel.load_weights(load_model_path)
@@ -465,14 +534,14 @@ def run_training(
             log_dir=logdir,
             histogram_freq=1,
             profile_batch='3,5',
-            update_freq='epoch'
+            update_freq=steps_per_epoch
         )
     else :
         tensorboard_callback = tf.keras.callbacks.TensorBoard(
             log_dir=logdir,
             histogram_freq=1,
             profile_batch=0,
-            update_freq='epoch'
+            update_freq=steps_per_epoch
         )
 
     lr_callback = keras.callbacks.LearningRateScheduler(lr_f, verbose=1)

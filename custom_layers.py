@@ -2,7 +2,7 @@ import tensorflow as tf
 import tensorflow.keras as keras
 from tensorflow.keras import layers
 from extra_models.hrnet_functional import *
-from extra_models.deep_voxel import *
+from extra_models.deep_voxel_functional import *
 from extra_models.eff_hrnet_functional import *
 
 class MaxPoolWithArgmax2D(layers.Layer):
