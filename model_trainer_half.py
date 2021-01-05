@@ -88,24 +88,31 @@ class AugGenerator():
     return
     ------
     X : np.array, dtype= np.float32 Normalized to [0.0,1.0]
-        shape : (HEIGHT, WIDTH, 6)
+        shape : (HEIGHT, WIDTH, 8)
+        * Additional one channel for edge maps
     Y : np.array, dtype= np.float32 Normalized to [0.0,1.0]
         shape : (HEIGHT, WIDTH, 3)
 
     """
-    def __init__(self, vid_paths, frame_size):
+    def __init__(self, vid_dir, edge_dir, vid_names, frame_size):
         """ 
         arguments
         ---------
-        vid_paths : list of strings or Path objects
-            Each video should have more than 500 frames.
-
+        vid_dir : string or Path object
+            A directory which has raw video files
+        edge_dir : string or Path object
+            A directory which has edge video files
+        vid_names : list of strings
+            List of video names. All raw video names and edge video names
+            are expected to have the same name for corresponding counterpart.
         frame_size : tuple (WIDTH, HEIGHT)
             Desired output frame size
             ex) (1280,720) for 720p
         """
-        self.vid_paths = vid_paths
-        self.vid_n = len(self.vid_paths)
+        self.vid_dir = Path(vid_dir)
+        self.edge_dir = Path(edge_dir)
+        self.vid_names = vid_names
+        self.vid_n = len(self.vid_names)
         self.frame_size = frame_size
         self.aug = A.Compose([
             # A.OneOf([
@@ -122,19 +129,14 @@ class AugGenerator():
         ],
         additional_targets={
             'Y0' : 'image',
-            # 'Y1' : 'image',
             'X1' : 'image',
-        },
-        )
-        self.aug_noise = A.Compose([
-            A.GaussNoise((0.0, 0.0),p=0.0)
-        ],
-        additional_targets={
-            'X1' : 'image',
+            'X0e' : 'image',
+            'X1e' : 'image',
         },
         )
         self.frame_idx = 0
-        self.cap = None
+        self.cap_raw = None
+        self.cap_edge = None
 
     def __iter__(self):
         return self
@@ -149,23 +151,27 @@ class AugGenerator():
         # Throw away some frames so data will not use
         # same frames set everytime.
         for i in range(random.randrange(0,30)):
-            if self.cap.isOpened():
-                ret, _ = self.cap.read()
+            if self.cap_raw.isOpened() and self.cap_edge.isOpened():
+                ret_raw, _ = self.cap_raw.read()
+                ret_edge, _ = self.cap_edge.read()
                 self.frame_idx += 1
-                if not ret:
+                if not (ret_raw and ret_edge):
                     self.reset_cap()
                     return self.__next__()
             else:
                 self.reset_cap()
                 return self.__next__()
         
-        sampled_frames = []
+        sampled_frames_raw = []
+        sampled_frames_edge = []
         for i in range(3):
-            if self.cap.isOpened():
-                ret, frame = self.cap.read()
+            if self.cap_raw.isOpened() and self.cap_edge.isOpened():
+                ret_raw, frame_raw = self.cap_raw.read()
+                ret_edge, frame_edge = self.cap_edge.read()
                 self.frame_idx += 1
-                if ret:
-                    sampled_frames.append(frame)
+                if ret_raw and ret_edge:
+                    sampled_frames_raw.append(frame_raw)
+                    sampled_frames_edge.append(frame_edge)
                 else:
                     self.reset_cap()
                     return self.__next__()
@@ -173,7 +179,7 @@ class AugGenerator():
                 self.reset_cap()
                 return self.__next__()
         
-        height, width = sampled_frames[0].shape[:2]
+        height, width = sampled_frames_raw[0].shape[:2]
         
         # frame_size : (width, height) ex) (1280, 720)
         rotate = False
@@ -199,9 +205,12 @@ class AugGenerator():
         crop_max = (crop_min[0]+crop_height,crop_min[1]+crop_width)
 
         if rotate:
-            cropped_frames = [f[crop_min[0]:crop_max[0],
-                                crop_min[1]:crop_max[1]].swapaxes(0,1)\
-                                for f in sampled_frames]
+            cropped_frames_raw = [f[crop_min[0]:crop_max[0],
+                                    crop_min[1]:crop_max[1]].swapaxes(0,1)\
+                                    for f in sampled_frames_raw]
+            cropped_frames_edge = [f[crop_min[0]:crop_max[0],
+                                    crop_min[1]:crop_max[1]].swapaxes(0,1)\
+                                    for f in sampled_frames_edge]
         elif move:
             # direction (-)
             if crop_min[0] > (height-crop_max[0]):
@@ -219,46 +228,60 @@ class AugGenerator():
             else:
                 delta_w_max = int((min(2*DELTA_MAX,width-crop_max[1]))/2)
                 delta_w = random.randint(0,delta_w_max)
-            cropped_frames = [
+            cropped_frames_raw = [
                 f[crop_min[0]+(d*delta_h):crop_max[0]+(d*delta_h),
                   crop_min[1]+(d*delta_w):crop_max[1]+(d*delta_w)]\
-                for d,f in enumerate(sampled_frames)
+                for d,f in enumerate(sampled_frames_raw)
+            ]
+            cropped_frames_edge = [
+                f[crop_min[0]+(d*delta_h):crop_max[0]+(d*delta_h),
+                  crop_min[1]+(d*delta_w):crop_max[1]+(d*delta_w)]\
+                for d,f in enumerate(sampled_frames_edge)
             ]
         else:
-            cropped_frames = [f[crop_min[0]:crop_max[0],
+            cropped_frames_raw = [f[crop_min[0]:crop_max[0],
                                 crop_min[1]:crop_max[1]]\
-                                for f in sampled_frames]
-        x0, y0, x1 = cropped_frames
+                                for f in sampled_frames_raw]
+            cropped_frames_edge = [f[crop_min[0]:crop_max[0],
+                                crop_min[1]:crop_max[1]]\
+                                for f in sampled_frames_edge]
+
+        x0, y0, x1 = cropped_frames_raw
+        # Edge mask is not needed for Y
+        x0_e, _, x1_e = cropped_frames_edge
 
         transformed = self.aug(
             image=x0,
             Y0=y0,
-            # Y1=y1,
             X1=x1,
+            X0e=x0_e,
+            X1e=x1_e,
         )
         x0 = transformed['image']
-        x1 = transformed['X1']
         y0 = transformed['Y0']
-        # y1 = transformed['Y1']
+        x1 = transformed['X1']
+        # Select only one channel for edge mask
+        # Leave the last axis to concatenate
+        x0_e = transformed['X0e'][...,0:1]
+        x1_e = transformed['X1e'][...,0:1]
 
-        noised = self.aug_noise(
-            image=x0,
-            X1 =x1
-        )
 
-        x0 = noised['image']
-        x1 = noised['X1']
 
-        x_concat = np.concatenate([x0,x1],axis=-1).astype(np.float32)/255.0
+        x_concat = np.concatenate([x0,x0_e,x1,x1_e],axis=-1).astype(np.float32)\
+                    /255.0
         y_concat = y0.astype(np.float32)/255.0
 
         return x_concat, y_concat
 
     def reset_cap(self):
-        if not(self.cap is None):
-            self.cap.release()
-        vid_idx = random.randrange(0,self.vid_n)
-        self.cap = cv2.VideoCapture(self.vid_paths[vid_idx])
+        if not(self.cap_raw is None):
+            self.cap_raw.release()
+        if not(self.cap_edge is None):
+            self.cap_edge.release()
+
+        target_vid = self.vid_names[random.randrange(0,self.vid_n)]
+        self.cap_raw = cv2.VideoCapture(str(self.vid_dir/target_vid))
+        self.cap_edge = cv2.VideoCapture(str(self.edge_dir/target_vid))
         self.frame_idx = 0
 
 class ValGenerator(AugGenerator):
@@ -285,9 +308,6 @@ class ValGenerator(AugGenerator):
             'X1' : 'image',
         },
         )
-        self.aug_noise = A.Compose([
-            A.GaussNoise(0.0,p=0)
-        ],
         additional_targets={
             'X1' : 'image',
         },
