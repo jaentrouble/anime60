@@ -65,7 +65,8 @@ def anime_model(
             inputs[0:3],
             inputs[4:7]
         ],
-        axis=-1
+        axis=-1,
+        name='input_concat'
     )
     encoded = model_function(resized_inputs)
     interpolated = voxel_interp(
@@ -443,9 +444,10 @@ def run_training(
         epochs, 
         batch_size, 
         steps_per_epoch,
-        train_vid_paths,
-        val_vid_paths,
-        test_vid_paths,
+        vid_dir,
+        edge_dir,
+        train_vid_names,
+        val_vid_names,
         frame_size,
         flow_map_size,
         interpolate_ratios,
@@ -541,8 +543,6 @@ def run_training(
     minutes, seconds = divmod(remain, 60)
     print(f'Took {hours:.0f} hours {minutes:.0f} minutes {seconds:.2f} seconds')
 
-    # test_ds = create_train_dataset(test_vid_paths,frame_size,batch_size,True)
-    # mymodel.evaluate(test_ds, steps=600)
 
 if __name__ == '__main__':
     from flow_models import *

@@ -38,15 +38,15 @@ if args.mem_growth:
             print(e)
 
 vid_dir = Path('data/cut')
-vid_paths = [str(vid_dir/vn) for vn in os.listdir(vid_dir)]
+edge_dir = Path('data/edge')
+vid_names = os.listdir(vid_dir)
 
 # To make sure data are chosen randomly between data groups
-random.shuffle(vid_paths)
+random.shuffle(vid_names)
 
-test_num = len(vid_paths) // 10
-train_vid_paths = vid_paths[:-2*test_num]
-val_vid_paths = vid_paths[-2*test_num:-test_num]
-test_vid_paths = vid_paths[-test_num:]
+test_num = len(vid_names) // 10
+train_vid_names = vid_paths[:-test_num]
+val_vid_names = vid_paths[-test_num:]
 
 model_f = getattr(flow_models_functional, args.model)
 lr_f = getattr(model_lr, args.lr)
@@ -57,7 +57,7 @@ batch_size = int(args.batch)
 profile = args.profile
 steps_per_epoch = int(args.steps)
 if steps_per_epoch <=0:
-    steps_per_epoch = len(train_vid_paths)*50/batch_size
+    steps_per_epoch = len(train_vid_names)*50/batch_size
 load_model_path = args.load
 
 kwargs = {}
@@ -67,9 +67,10 @@ kwargs['name'] = name
 kwargs['epochs'] = epochs
 kwargs['batch_size'] = batch_size
 kwargs['steps_per_epoch'] = steps_per_epoch
-kwargs['train_vid_paths'] = train_vid_paths
-kwargs['val_vid_paths'] = val_vid_paths
-kwargs['test_vid_paths'] = val_vid_paths
+kwargs['vid_dir'] = vid_dir
+kwargs['edge_dir'] = edge_dir
+kwargs['train_vid_names'] = train_vid_names
+kwargs['val_vid_names'] = val_vid_names
 kwargs['frame_size'] = (960,540)
 kwargs['flow_map_size'] = (512,288)
 kwargs['interpolate_ratios'] = [0.5]
