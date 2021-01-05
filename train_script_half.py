@@ -2,7 +2,7 @@ import os
 
 import numpy as np
 from model_trainer_half import run_training
-import flow_models
+import flow_models_functional
 import model_lr
 import argparse
 import tensorflow as tf
@@ -48,7 +48,7 @@ train_vid_paths = vid_paths[:-2*test_num]
 val_vid_paths = vid_paths[-2*test_num:-test_num]
 test_vid_paths = vid_paths[-test_num:]
 
-model_f = getattr(flow_models, args.model)
+model_f = getattr(flow_models_functional, args.model)
 lr_f = getattr(model_lr, args.lr)
 name = args.name
 epochs = int(args.epochs)
