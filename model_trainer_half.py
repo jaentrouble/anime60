@@ -73,7 +73,7 @@ def anime_model(
         interpolate_ratios,
         name='voxel_interp'
     )
-    anime_model = keras.Model(inputs=inputs, outputs=outputs,
+    anime_model = keras.Model(inputs=inputs, outputs=interpolated,
                                 name='anime_model')
     return anime_model
 
