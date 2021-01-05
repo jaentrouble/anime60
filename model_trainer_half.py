@@ -52,7 +52,7 @@ def anime_model(
         Returns [0,1] range normalized frames
     """
     flow_map_size_hw = (flow_map_size[1],flow_map_size[0])
-    inputs = keras.Input((None,None,4))
+    inputs = keras.Input((None,None,8))
     inputs_float = tf.cast(inputs, tf.float32, name='input_cast')
     resized_inputs = tf.image.resize(
         inputs_float,
@@ -345,7 +345,7 @@ def create_train_dataset(
                 frame_size,
             ),
             output_signature=(
-                tf.TensorSpec(shape=[frame_size[1],frame_size[0],6],
+                tf.TensorSpec(shape=[frame_size[1],frame_size[0],8],
                               dtype=tf.float32),
                 tf.TensorSpec(shape=[frame_size[1],frame_size[0],3],
                               dtype=tf.float32),
