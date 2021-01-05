@@ -9,6 +9,7 @@ Voxel interpreting layer using only Functional API
 Every functions should:
     1. 'inputs' argument as the first argument,
     2. return outputs tensor
+        -> There may be extra loss tensor returns
 So that every functions should be used in this format:
     output = function(inputs, *args, **kwargs)
 
