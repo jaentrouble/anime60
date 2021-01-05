@@ -344,6 +344,8 @@ def create_train_dataset(
     dataset = dummy_ds.interleave(
         lambda x: tf.data.Dataset.from_generator(
             lambda x: generator(
+                vid_dir,
+                edge_dir,
                 vid_names[indices[x]:indices[x+1]],
                 frame_size,
             ),
