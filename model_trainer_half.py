@@ -364,9 +364,9 @@ def create_train_dataset(
         num_parallel_calls=parallel,
     )
     if val_data:
-        dataset = dataset.shuffle(50, reshuffle_each_iteration=False)
+        dataset = dataset.shuffle(100, reshuffle_each_iteration=False)
     else:
-        dataset = dataset.shuffle(1700, reshuffle_each_iteration=False)
+        dataset = dataset.shuffle(1000, reshuffle_each_iteration=False)
     dataset = dataset.batch(batch_size, drop_remainder=True)
     dataset = dataset.prefetch(autotune)
     dataset = dataset.repeat()
