@@ -157,7 +157,7 @@ def voxel_interp(
 
     outputs = tf.concat(output_frames, name=nc(name,'concat'))
 
-def bilinear_interp(image, new_h, new_ww, name=None):
+def bilinear_interp(image, new_hh, new_ww, name=None):
     """Perform bilinear sampling on im given x, y coordinates
 
     This function implements the differentiable sampling mechanism with
