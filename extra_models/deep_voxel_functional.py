@@ -155,7 +155,7 @@ def voxel_interp(
         output = norm_mask*output_0 + (1-norm_mask)*output_1
         output_frames.append(output)
 
-    outputs = tf.concat(output_frames, name=nc(name,'concat'))
+    outputs = tf.concat(output_frames, axis=-1 name=nc(name,'concat'))
 
 def bilinear_interp(image, new_hh, new_ww, name=None):
     """Perform bilinear sampling on im given x, y coordinates
