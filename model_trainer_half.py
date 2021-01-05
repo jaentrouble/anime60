@@ -537,7 +537,7 @@ def run_training(
         ],
         verbose=0,
         validation_data=val_ds,
-        validation_steps=100,
+        validation_steps=50,
     )
 
     delta = time.time()-st
