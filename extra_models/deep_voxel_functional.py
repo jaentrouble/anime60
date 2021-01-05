@@ -156,6 +156,7 @@ def voxel_interp(
         output_frames.append(output)
 
     outputs = tf.concat(output_frames, axis=-1, name=nc(name,'concat'))
+    return outputs
 
 def bilinear_interp(image, new_hh, new_ww, name=None):
     """Perform bilinear sampling on im given x, y coordinates
