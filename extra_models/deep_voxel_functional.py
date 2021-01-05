@@ -119,7 +119,6 @@ def voxel_interp(
             name=nc(name,'flow_reg_loss_cast')),
         name=nc(name,'flow_reg_loss_div'),
     )
-    # conv_flow_mask.add_loss(flow_reg_loss)
 
     mask_reg_loss = tf.math.divide_no_nan(
         gamma_mask*tf.reduce_sum(tf.image.total_variation(
@@ -130,7 +129,6 @@ def voxel_interp(
             name=nc(name,'mask_reg_loss_cast')),
         name=nc(name,'flow_reg_loss_div')
     )
-    # conv_flow_mask.add_loss(mask_reg_loss)
 
     output_frames = []
     for i, alpha in enumerate(interpolate_ratios):
