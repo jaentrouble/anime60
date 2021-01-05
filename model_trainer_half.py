@@ -288,18 +288,22 @@ class AugGenerator():
 class ValGenerator(AugGenerator):
     """Same as AugGenerator, but without augmentation.
     """
-    def __init__(self, vid_paths, frame_size):
+    def __init__(self, vid_dir, edge_dir, vid_names, frame_size):
         """ 
         arguments
         ---------
-        vid_paths : list of strings or Path objects
-            Each video should have more than 500 frames.
-
+        vid_dir : string or Path object
+            A directory which has raw video files
+        edge_dir : string or Path object
+            A directory which has edge video files
+        vid_names : list of strings
+            List of video names. All raw video names and edge video names
+            are expected to have the same name for corresponding counterpart.
         frame_size : tuple (WIDTH, HEIGHT)
             Desired output frame size
             ex) (1280,720) for 720p
         """
-        super().__init__(vid_paths, frame_size)
+        super().__init__(vid_dir, edge_dir, vid_names, frame_size)
         self.aug = A.Compose([
             A.Resize(frame_size[1], frame_size[0]),
         ],
