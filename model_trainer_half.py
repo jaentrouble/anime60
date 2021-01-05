@@ -317,7 +317,9 @@ class ValGenerator(AugGenerator):
         )
 
 def create_train_dataset(
-        vid_paths, 
+        vid_dir,
+        edge_dir,
+        vid_names, 
         frame_size, 
         batch_size, 
         val_data=False,
@@ -328,7 +330,7 @@ def create_train_dataset(
         (WIDTH, HEIGHT)
     """
     autotune = tf.data.experimental.AUTOTUNE
-    num_vids = len(vid_paths)
+    num_vids = len(vid_names)
     if val_data:
         generator = ValGenerator
     else:
@@ -342,7 +344,7 @@ def create_train_dataset(
     dataset = dummy_ds.interleave(
         lambda x: tf.data.Dataset.from_generator(
             lambda x: generator(
-                vid_paths[indices[x]:indices[x+1]],
+                vid_names[indices[x]:indices[x+1]],
                 frame_size,
             ),
             output_signature=(
@@ -515,10 +517,11 @@ def run_training(
     else:
         tqdm_callback = TqdmCallback()
 
-    train_ds = create_train_dataset(train_vid_paths,frame_size,batch_size, 
-                                    parallel=6)
-    val_ds = create_train_dataset(val_vid_paths,frame_size,batch_size,
-                                    val_data=True, parallel=6)
+    train_ds = create_train_dataset(vid_dir,edge_dir, train_vid_names,
+                                    frame_size,batch_size, parallel=6)
+    val_ds = create_train_dataset(vid_dir,edge_dir,val_vid_names,
+                                  frame_size,batch_size,
+                                  val_data=True, parallel=6)
 
     image_callback = ValFigCallback(val_ds, logdir)
 
