@@ -305,12 +305,9 @@ class ValGenerator(AugGenerator):
         ],
         additional_targets={
             'Y0' : 'image',
-            # 'Y1' : 'image',
             'X1' : 'image',
-        },
-        )
-        additional_targets={
-            'X1' : 'image',
+            'X0e' : 'image',
+            'X1e' : 'image',
         },
         )
 
