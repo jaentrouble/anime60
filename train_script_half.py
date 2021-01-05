@@ -45,8 +45,8 @@ vid_names = os.listdir(vid_dir)
 random.shuffle(vid_names)
 
 test_num = len(vid_names) // 10
-train_vid_names = vid_paths[:-test_num]
-val_vid_names = vid_paths[-test_num:]
+train_vid_names = vid_names[:-test_num]
+val_vid_names = vid_names[-test_num:]
 
 model_f = getattr(flow_models_functional, args.model)
 lr_f = getattr(model_lr, args.lr)
