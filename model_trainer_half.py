@@ -147,7 +147,8 @@ class AugGenerator():
         return self
 
     def __next__(self):
-        if self.frame_idx+6 >= 500 or (self.cap is None):
+        if self.frame_idx+6 >= 500 or (self.cap_raw is None)\
+            or (self.cap_edge is None):
             self.reset_cap()
 
         # Throw away some frames so data will not use
