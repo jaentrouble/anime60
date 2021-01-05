@@ -54,12 +54,14 @@ def voxel_interp(
         total variation regularization weight for temporal component
         
 
-    Output
-    ------
-    Output shape:
+    Returns
+    -------
+    outputs: tf.Tensor
         (N,H,W,3*F) where 3 = RGB, F = interpolated frames
         images will be concatenated along the last axis
         i.e. R0,B0,G0, R1,B1,G1 ...
+    losses : tuple of tf.Tensor
+        Additional regularization loss
     """
 
     if not isinstance(inputs,list):
@@ -117,7 +119,7 @@ def voxel_interp(
             name=nc(name,'flow_reg_loss_cast')),
         name=nc(name,'flow_reg_loss_div'),
     )
-    conv_flow_mask.add_loss(flow_reg_loss)
+    # conv_flow_mask.add_loss(flow_reg_loss)
 
     mask_reg_loss = tf.math.divide_no_nan(
         gamma_mask*tf.reduce_sum(tf.image.total_variation(
@@ -128,7 +130,7 @@ def voxel_interp(
             name=nc(name,'mask_reg_loss_cast')),
         name=nc(name,'flow_reg_loss_div')
     )
-    conv_flow_mask.add_loss(mask_reg_loss)
+    # conv_flow_mask.add_loss(mask_reg_loss)
 
     output_frames = []
     for i, alpha in enumerate(interpolate_ratios):
@@ -156,7 +158,7 @@ def voxel_interp(
         output_frames.append(output)
 
     outputs = tf.concat(output_frames, axis=-1, name=nc(name,'concat'))
-    return outputs
+    return outputs, (flow_reg_loss,mask_reg_loss)
 
 def bilinear_interp(image, new_hh, new_ww, name=None):
     """Perform bilinear sampling on im given x, y coordinates

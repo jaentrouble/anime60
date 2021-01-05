@@ -69,13 +69,14 @@ def anime_model(
         name='input_concat'
     )
     encoded = model_function(resized_inputs)
-    interpolated = voxel_interp(
+    interpolated, extra_losses = voxel_interp(
         [no_edge, encoded],
         interpolate_ratios,
         name='voxel_interp'
     )
     anime_model = keras.Model(inputs=inputs, outputs=interpolated,
                                 name='anime_model')
+    anime_model.add_loss(extra_losses)
     return anime_model
 
 
