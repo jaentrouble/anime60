@@ -1,7 +1,7 @@
 import os
 
 import numpy as np
-from model_trainer_half import run_training
+from model_trainer_cyclic import run_training
 import flow_models_functional
 import model_lr
 import argparse
