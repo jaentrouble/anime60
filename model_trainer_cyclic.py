@@ -55,6 +55,7 @@ class AnimeModelCyclic(keras.Model):
         overlap: int
             Overlap value when dividing into patches
         """
+        super().__init__()
         self.anime_model = anime_model
         # A model that outputs interpolated frame and a net(flow & mask)
         self.interp_flow_model = keras.Model(
