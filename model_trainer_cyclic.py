@@ -89,7 +89,7 @@ class AnimeModelCyclic(keras.Model):
         f_12 = tf.concat([f_1,f_02[...,4:]],axis=-1, name='f_12_concat')
         with tf.GradientTape() as tape:
             inter_10, net_10 = self.interp_flow_model(f_02, training=True)
-            recon_loss = self.mae(f_1, inter_10)
+            recon_loss = self.mae(f_1[...,:3], inter_10)
 
             inter_05 = self.anime_model(f_01, training=True)
             inter_15 = self.anime_model(f_12, training=True)
@@ -131,7 +131,7 @@ class AnimeModelCyclic(keras.Model):
             ],axis=-1)
 
             inter_10pp, net_10pp = self.interp_flow_model(f_0515)
-            cyclic_loss = self.mae(f_1, inter_10pp)
+            cyclic_loss = self.mae(f_1[...,:3], inter_10pp)
             lin_loss = self.mse(net_10[...,:2],net_10pp[...,:2])
 
             total_loss = recon_loss + \
