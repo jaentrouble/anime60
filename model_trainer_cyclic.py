@@ -132,7 +132,7 @@ class AnimeModelCyclic(keras.Model):
 
             inter_10pp, net_10pp = self.interp_flow_model(f_0515)
             cyclic_loss = self.mae(f_1[...,:3], inter_10pp)
-            lin_loss = self.mse(net_10[...,:2],net_10pp[...,:2])
+            lin_loss = self.mse(net_10[...,:2],net_10pp[...,:2]*2)
 
             total_loss = recon_loss + \
                          GAMMA_CYCLIC * cyclic_loss + \
