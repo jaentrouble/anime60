@@ -85,7 +85,8 @@ def patch_to_frame_on_batch(patches, patch_size, frame_size, overlap):
     total_patch_num = tf.shape(patches)[0]
     patch_h, patch_w = patch_size
     patch_c = tf.shape(patches)[3]
-    frame_h, frame_w = frame_size
+    frame_h= frame_size[0]
+    frame_w= frame_size[1]
     
     valid_h = (patch_h-2*overlap)
 
