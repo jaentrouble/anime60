@@ -652,7 +652,7 @@ def run_training(
 
     image_callback = ValFigCallback(val_ds, logdir)
 
-    mymodel.fit(
+    c_model.fit(
         x=train_ds,
         epochs=epochs,
         steps_per_epoch=steps_per_epoch,
