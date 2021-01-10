@@ -589,7 +589,7 @@ def run_training(
     )
 
     if load_model_path:
-        a_model.load_weights(load_model_path).expect_partial()
+        a_model.load_weights(load_model_path)
         print('*'*50)
         print(f'Loaded from : {load_model_path}')
         print('*'*50)
@@ -599,7 +599,7 @@ def run_training(
     #     loss=loss,
     # )
     e_model = EdgeModel([patch_size[1],patch_size[0],3], edge_model_f)
-    e_model.load_weights(edge_model_path).expect_partial()
+    e_model.load_weights(edge_model_path)
     print('*'*50)
     print(f'Edge model loaded from : {load_model_path}')
     print('*'*50)
