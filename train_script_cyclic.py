@@ -25,8 +25,9 @@ parser.add_argument('-mg','--memorygrow', dest='mem_growth',
                     action='store_true',default=False)
 parser.add_argument('-pf','--profile', dest='profile',
                     action='store_true',default=False)
-parser.add_argument('--load',dest='load',default=False)
-parser.add_argument('--edge',dest='edge',required=True)
+parser.add_argument('--load',dest='load',default=None)
+parser.add_argument('--edge',dest='edge',default=None)
+parser.add_argument('--amodel',dest='amodel',default=None)
 
 args = parser.parse_args()
 
@@ -60,7 +61,6 @@ profile = args.profile
 steps_per_epoch = int(args.steps)
 if steps_per_epoch <=0:
     steps_per_epoch = len(train_vid_names)*50/batch_size
-load_model_path = args.load
 
 kwargs = {}
 kwargs['model_f'] = model_f
@@ -79,10 +79,11 @@ kwargs['interpolate_ratios'] = [0.5]
 kwargs['patch_size'] = (320,320)
 kwargs['overlap'] = 20
 kwargs['edge_model_f'] = em.ehrb0_112_12
-kwargs['edge_model_path'] = args.edge
 kwargs['mixed_float'] = mixed_float
 kwargs['notebook'] = False
 kwargs['profile'] = profile
-kwargs['load_model_path'] = load_model_path
+kwargs['edge_model_path'] = args.edge
+kwargs['amodel_path'] = args.amodel
+kwargs['load_model_path'] = args.load
 
 run_training(**kwargs)

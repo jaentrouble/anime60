@@ -573,16 +573,20 @@ def run_training(
         patch_size,
         overlap,
         edge_model_f,
-        edge_model_path,
         mixed_float = True,
         notebook = True,
         profile = False,
+        edge_model_path=None,
+        amodel_path = None,
         load_model_path = None,
     ):
     """
     patch_size, frame_size and flow_map_size are all
         (WIDTH, HEIGHT) format
     """
+    if ((edge_model_path is None) or (amodel_path is None))\
+        and (load_model_path is None):
+        raise ValueError('Need a path to load model')
     if mixed_float:
         policy = mixed_precision.Policy('mixed_float16')
         mixed_precision.set_global_policy(policy)
@@ -594,21 +598,19 @@ def run_training(
         interpolate_ratios,
         flow_map_size
     )
-
-    if load_model_path:
-        a_model.load_weights(load_model_path).expect_partial()
-        print('*'*50)
-        print(f'Loaded from : {load_model_path}')
-        print('*'*50)
-    # loss = keras.losses.MeanAbsoluteError()
-    # a_model.compile(
-    #     optimizer='adam',
-    # )
     e_model = EdgeModel([patch_size[1],patch_size[0],3], edge_model_f)
-    e_model.load_weights(edge_model_path).expect_partial()
-    print('*'*50)
-    print(f'Edge model loaded from : {load_model_path}')
-    print('*'*50)
+
+    if amodel_path is not None:
+        a_model.load_weights(amodel_path).expect_partial()
+        print('*'*50)
+        print(f'Anime model loaded from : {amodel_path}')
+        print('*'*50)
+
+    if edge_model_path is not None:
+        e_model.load_weights(edge_model_path).expect_partial()
+        print('*'*50)
+        print(f'Edge model loaded from : {edge_model_path}')
+        print('*'*50)
 
     c_model = AnimeModelCyclic(
         a_model,
@@ -616,6 +618,11 @@ def run_training(
         (patch_size[1],patch_size[0]),
         overlap,
     )
+    if load_model_path is not None:
+        c_model.load_weights(load_model_path)
+        print('*'*50)
+        print(f'Cyclic model loaded from : {load_model_path}')
+        print('*'*50)
     c_model.compile(optimizer='adam')
 
 
