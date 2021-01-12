@@ -153,6 +153,13 @@ class AnimeModelCyclic(keras.Model):
             'Lr' : self.recon_loss_tracker.result(),
             'Lm' : self.lin_loss_tracker.result()
         }
+    
+    def test_step(self, data):
+        x, y = data
+        y_pred = self.anime_model(x, training=False)
+        recon_loss = self.mae(y, y_pred)
+        self.recon_loss_tracker.update_state(recon_loss)
+        return {'Lr' : self.recon_loss_tracker.result()}
 
     @property
     def metrics(self):
